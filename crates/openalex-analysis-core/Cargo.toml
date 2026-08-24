@@ -1,0 +1,25 @@
+[package]
+name = "openalex-analysis-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "openalex_analysis_core"
+path = "src/lib.rs"
+
+[[bin]]
+name = "openalex-analysis-core"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+chrono.workspace = true
+glob.workspace = true
+polars.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+rust_xlsxwriter.workspace = true
+

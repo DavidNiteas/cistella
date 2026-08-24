@@ -1,0 +1,12 @@
+/target/
+/openalex-library/
+/openalex-sources/
+/openalex-sources.zip
+/exports/
+/node_modules/
+/package.json
+/pnpm-lock.yaml
+/crates/openalex-analysis-studio/node_modules/
+/crates/openalex-analysis-studio/dist/
+.DS_Store
+*.log

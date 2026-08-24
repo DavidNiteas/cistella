@@ -1,0 +1,25 @@
+[package]
+name = "openalex-analysis-studio"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "openalex_analysis_studio_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "openalex-analysis-studio"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+openalex-analysis-core = { path = "../../openalex-analysis-core" }
+serde.workspace = true
+serde_json.workspace = true
+tauri = { workspace = true, features = [] }
+tauri-plugin-dialog = "2.7.2"
+
