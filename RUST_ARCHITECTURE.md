@@ -1,90 +1,61 @@
-# OpenAlex Analysis Rust architecture
+# cistella Rust architecture
+
+## Architectural position
+
+cistella is a portable desktop workbench for a personal literature vault. The vault is the system’s first-class ownership and portability boundary; workspaces provide focused views over the current vault rather than independent standalone tool entry points.
 
 ## Crate split
 
-- `openalex-analysis-core`
-  - Library + fixed CLI export.
-  - Owns the logical schema, manifest, storage layout abstraction, import/export pipeline and Polars runtime query layer.
-  - CLI binary: `openalex-analysis-core`.
-- `openalex-analysis-studio`
-  - Tauri 2 desktop application with embedded React/Vite frontend.
-  - Rust side lives in `crates/openalex-analysis-studio/src-tauri` and calls `openalex-analysis-core` through Tauri commands.
-  - Frontend lives in `crates/openalex-analysis-studio/src` and is bundled from `dist/` into the Tauri application at build time.
+- `cistella-core`
+  - Core library for vaults, manifests, storage layout, source import, query and export.
+  - Owns portable data semantics and reusable application capabilities.
+  - Treats external providers such as OpenAlex as source adapters, not as the product model.
+- `cistella-desktop`
+  - Tauri 2 desktop application with an embedded React/Vite frontend.
+  - The Rust side lives in `crates/openalex-analysis-studio/src-tauri` and exposes desktop commands backed by the core library.
+  - The frontend lives in `crates/openalex-analysis-studio/src` and is bundled into the desktop application at build time.
+
+The `openalex-analysis-studio` directory names are retained for now as historical repository paths. They are compatibility/path facts, not user-facing product names.
 
 ## Product workspace model
 
-Studio has two separate workspaces plus settings:
+cistella centers on workspaces and the current vault:
 
-1. **Data Processing workspace**
-   - Select a raw OpenAlex Sources directory.
-   - Import and build an Analysis Library.
-   - Write compressed Parquet and optionally an Arrow IPC serving cache.
-   - Export current ranking/search results to CSV/XLSX for Excel or external analysis.
-2. **Analysis workspace**
-   - Connect to an external library directory containing `manifest.json`, or directly to a single `sources.arrow`/`sources.ipc`/`sources.parquet` file.
-   - The application does not bundle, hardcode or own user libraries; it only connects to paths chosen by the user.
-   - Provides overview cards, metric ranking chart and searchable source table.
-3. **Settings**
-   - Bilingual UI: Chinese / English toggle, persisted in browser local storage.
+1. **Vault workspace**
+   - Open, create, connect to, or recover a local library vault.
+   - Acts as the control point for the user’s personal literature asset.
+2. **Reading workspace**
+   - Manage reading flow, annotations, tags and notes.
+3. **Source analysis workspace**
+   - Connect or import supported external source data into the local vault.
+   - Query, inspect, summarize and export source-level analytics.
+4. **Settings**
+   - Manage language, portable preferences and general behavior.
 
 ## Storage principles
 
-1. Parquet layout is the canonical compressed storage format for packaging, transfer and archive.
-2. Arrow IPC layout is a local serving cache for fast startup, memory-mapped/zero-copy-oriented reads and GUI interaction.
-3. Both layouts share one logical schema and one manifest; only physical layout differs.
-4. Runtime queries use Polars `LazyFrame`; Parquet scans are decompressed/collected into memory, while Arrow IPC scans are the path intended for local low-copy/mmap serving.
+1. A vault is the portable unit of ownership.
+2. Parquet is the canonical compressed storage format for packaging and transfer.
+3. Arrow IPC is the local serving cache for fast reads and desktop interaction.
+4. A single logical schema is shared across physical layouts.
+5. Runtime queries use Polars `LazyFrame` over the selected layout.
+6. Source provenance is retained so imported data can be understood and traced without making the source provider the application’s identity.
 
-## Dataset layout
+## Source adapters
 
-```text
-openalex-library/
-├── manifest.json
-├── parquet/
-│   └── sources.parquet
-└── arrow/
-    └── sources.arrow
-```
+OpenAlex is an important supported data source. Its importer performs source-specific inspection and normalization into cistella vault data. The core adapter boundary is intentionally provider-neutral so additional sources can be added without redefining the vault model.
 
-Planned logical tables:
+## Desktop-first delivery
 
-- `sources` *(implemented)*
-- `source_year_metrics`
-- `source_topics`
-- `source_issns`
-- `metric_definitions`
-- `ranking_snapshots`
+The desktop application is the sole public product entry point. Any remaining scripted commands are development or build support only, not supported product workflows.
 
-## Core CLI
+## Build and packaging
 
 ```powershell
-cargo run -p openalex-analysis-core -- import-sources openalex-sources openalex-library
-cargo run -p openalex-analysis-core -- overview openalex-library
-cargo run -p openalex-analysis-core -- overview openalex-library\arrow\sources.arrow
-cargo run -p openalex-analysis-core -- top openalex-library journal h_index 20
-cargo run -p openalex-analysis-core -- search openalex-library journal 20 Nature
-cargo run -p openalex-analysis-core -- export-top openalex-library exports\top_sources.xlsx journal h_index 100
-cargo run -p openalex-analysis-core -- export-search openalex-library exports\sources.csv journal 1000 Nature
-```
-
-## Studio frontend and Tauri
-
-```powershell
-cd crates/openalex-analysis-studio
-pnpm install
 pnpm build
-cd ../..
-cargo build -p openalex-analysis-studio
+cargo check -p cistella-desktop
+cargo test -p cistella-core
 ```
 
-Build release executables:
+Release builds should produce a portable desktop application centered on the cistella vault model.
 
-```powershell
-cargo build --release -p openalex-analysis-core
-cargo build --release -p openalex-analysis-studio
-```
-
-For a full Tauri installer/bundle, use the Tauri CLI from the studio directory:
-
-```powershell
-pnpm tauri build
-```

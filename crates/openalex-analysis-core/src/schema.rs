@@ -19,6 +19,20 @@ impl TableName {
         }
     }
 
-    pub fn parquet_file(self) -> &'static str { match self { TableName::Sources => "sources.parquet", TableName::SourceYearMetrics => "source_year_metrics.parquet", TableName::SourceTopics => "source_topics.parquet", TableName::SourceIssns => "source_issns.parquet" } }
-    pub fn arrow_file(self) -> &'static str { match self { TableName::Sources => "sources.arrow", TableName::SourceYearMetrics => "source_year_metrics.arrow", TableName::SourceTopics => "source_topics.arrow", TableName::SourceIssns => "source_issns.arrow" } }
+    pub fn parquet_file(self) -> &'static str {
+        match self {
+            TableName::Sources => "sources.parquet",
+            TableName::SourceYearMetrics => "source_year_metrics.parquet",
+            TableName::SourceTopics => "source_topics.parquet",
+            TableName::SourceIssns => "source_issns.parquet",
+        }
+    }
+    pub fn arrow_file(self) -> &'static str {
+        match self {
+            TableName::Sources => "sources.arrow",
+            TableName::SourceYearMetrics => "source_year_metrics.arrow",
+            TableName::SourceTopics => "source_topics.arrow",
+            TableName::SourceIssns => "source_issns.arrow",
+        }
+    }
 }

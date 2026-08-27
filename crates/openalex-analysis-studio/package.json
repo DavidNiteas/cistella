@@ -1,5 +1,5 @@
 {
-  "name": "openalex-analysis-studio",
+  "name": "cistella-desktop",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -11,17 +11,18 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",
-    "@vitejs/plugin-react": "latest",
+    "@tauri-apps/plugin-dialog": "^2.7.2",
     "echarts": "latest",
     "echarts-for-react": "latest",
     "react": "latest",
-    "react-dom": "latest",
-    "typescript": "latest",
-    "vite": "latest"
+    "react-dom": "latest"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.4",
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4"
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "4.3.4",
+    "typescript": "5.8.3",
+    "vite": "6.2.4"
   }
 }

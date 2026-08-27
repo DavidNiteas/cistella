@@ -34,7 +34,11 @@ impl ExportFormat {
     }
 }
 
-pub fn export_dataframe(mut df: DataFrame, output: impl AsRef<Path>, format: ExportFormat) -> Result<()> {
+pub fn export_dataframe(
+    mut df: DataFrame,
+    output: impl AsRef<Path>,
+    format: ExportFormat,
+) -> Result<()> {
     let output = output.as_ref();
     if let Some(parent) = output.parent() {
         if !parent.as_os_str().is_empty() {
