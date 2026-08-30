@@ -151,6 +151,7 @@ fn app_config_roundtrip_is_consistent() {
             width: 1280,
             height: 720,
         }),
+        ..Default::default()
     };
 
     save_app_config(dirs.app_config_path(), &config).unwrap();

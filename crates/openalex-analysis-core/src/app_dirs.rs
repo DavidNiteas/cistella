@@ -1,4 +1,5 @@
 use std::{
+    collections::BTreeMap,
     fs,
     path::{Path, PathBuf},
 };
@@ -189,6 +190,20 @@ pub struct RecentVault {
 pub struct AppConfig {
     pub theme: Option<String>,
     pub window_size: Option<WindowSize>,
+    /// Per-resolver enable flags. Missing entries default to enabled.
+    #[serde(default)]
+    pub remote_resolvers_enabled: BTreeMap<String, bool>,
+}
+
+impl AppConfig {
+    /// Returns `true` when the named remote metadata resolver is enabled.
+    /// Missing entries are treated as enabled for backward compatibility.
+    pub fn is_resolver_enabled(&self, name: &str) -> bool {
+        self.remote_resolvers_enabled
+            .get(name)
+            .copied()
+            .unwrap_or(true)
+    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
@@ -532,6 +547,7 @@ mod tests {
                 width: 1280,
                 height: 720,
             }),
+            ..Default::default()
         };
         save_app_config(&path, &config).unwrap();
         let loaded = load_app_config(&path).unwrap();

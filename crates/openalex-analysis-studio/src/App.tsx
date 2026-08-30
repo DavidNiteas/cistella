@@ -275,6 +275,9 @@ const zh = {
   importByIdentifier: '通过标识符导入',
   identifierInputPlaceholder: 'DOI / PMID / PMCID / ISBN / OpenAlex ID',
   resolveIdentifier: '解析',
+  clearRemoteCache: '清除在线解析缓存',
+  remoteCacheCleared: '在线解析缓存已清除',
+  remoteCacheClearFailed: '清除缓存失败',
   remoteResolveTitle: '在线解析结果',
   importLiterature: '导入文献',
   importLiteratureTitle: '导入文献',
@@ -500,6 +503,9 @@ const en: Dict = {
   importByIdentifier: 'Import by identifier',
   identifierInputPlaceholder: 'DOI / PMID / PMCID / ISBN / OpenAlex ID',
   resolveIdentifier: 'Resolve',
+  clearRemoteCache: 'Clear remote cache',
+  remoteCacheCleared: 'Remote metadata cache cleared',
+  remoteCacheClearFailed: 'Failed to clear cache',
   remoteResolveTitle: 'Remote resolution result',
   importLiteratureTitle: 'Import literature',
   importLiteratureDesc: 'Choose a file to preview and import into the current vault.',
@@ -879,6 +885,7 @@ export default function App() {
   const [remoteResolveError, setRemoteResolveError] = useState('');
   const [remoteResolvePreview, setRemoteResolvePreview] = useState<LiteratureImportPreview | null>(null);
   const [remoteImportStrategy, setRemoteImportStrategy] = useState<'merge' | 'skip' | 'create'>('merge');
+  const [remoteCacheFeedback, setRemoteCacheFeedback] = useState('');
   const [openAlexWorksDir, setOpenAlexWorksDir] = useState('');
   const [openAlexQuery, setOpenAlexQuery] = useState('');
   const [openAlexCandidates, setOpenAlexCandidates] = useState<OpenAlexWorkCandidate[]>([]);
@@ -1552,6 +1559,17 @@ export default function App() {
     });
   };
 
+  const clearRemoteMetadataCache = async () => {
+    if (!vaultPath) return;
+    setRemoteCacheFeedback('');
+    try {
+      await invoke('clear_remote_metadata_cache', { vaultPath });
+      setRemoteCacheFeedback(t.remoteCacheCleared);
+    } catch (e: any) {
+      setRemoteCacheFeedback(`${t.remoteCacheClearFailed}: ${e?.message ?? e}`);
+    }
+  };
+
   const commitRemoteImport = async () => {
     if (!remoteResolvePreview) return;
     setBusy(true);
@@ -2072,7 +2090,9 @@ export default function App() {
             })()}
           </span>
           <button className="secondary" onClick={() => void resolveRemoteMetadata()} disabled={busy || remoteResolveLoading || !identifierInput.trim()}>{t.resolveIdentifier}</button>
+          <button className="secondary" onClick={() => void clearRemoteMetadataCache()} disabled={busy || !vaultPath}>{t.clearRemoteCache}</button>
           <button onClick={beginNewLiterature} disabled={busy}>{t.addLiterature}</button>
+          {remoteCacheFeedback && <small className="literatureFeedback">{remoteCacheFeedback}</small>}
         </div>}
         {hasVault && literatureImportFormat === 'openalex_works' && (openAlexLoading || openAlexError || openAlexCandidates.length > 0) && <div className="card span3">
           <h2>{t.openAlexWorksTitle}</h2>

@@ -1039,8 +1039,10 @@ async fn resolve_remote_metadata(
     state: tauri::State<'_, AppState>,
 ) -> CommandResult<Value> {
     let vault_path = current_vault_path(&state)?;
-    let record = RemoteResolverRegistry::new()
-        .resolve(&vault_path, &identifier, force_refresh)
+    let app_dirs = current_app_directories()?;
+    let record = RemoteResolverRegistry::from_app_dirs(&app_dirs)
+        .map_err(|e| e.to_string())?
+        .resolve_best(&vault_path, &identifier, force_refresh)
         .await
         .map_err(|e| e.to_string())?;
     serde_json::to_value(record).map_err(|e| e.to_string())
@@ -1053,8 +1055,10 @@ async fn import_by_identifier(
     state: tauri::State<'_, AppState>,
 ) -> CommandResult<Value> {
     let vault_path = current_vault_path(&state)?;
-    let record = RemoteResolverRegistry::new()
-        .resolve(&vault_path, &identifier, false)
+    let app_dirs = current_app_directories()?;
+    let record = RemoteResolverRegistry::from_app_dirs(&app_dirs)
+        .map_err(|e| e.to_string())?
+        .resolve_best(&vault_path, &identifier, false)
         .await
         .map_err(|e| e.to_string())?;
     let vault = vault_from_state(&state)?;
@@ -1067,6 +1071,17 @@ async fn import_by_identifier(
         cistella_core::import::library_importer::import_single_record(&vault, record, policy)
             .map_err(|e| e.to_string())?;
     serde_json::to_value(result).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn clear_remote_metadata_cache(vault_path: String) -> CommandResult<()> {
+    let cache_dir = PathBuf::from(vault_path)
+        .join("cache")
+        .join("remote_metadata");
+    if cache_dir.exists() {
+        std::fs::remove_dir_all(&cache_dir).map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -2144,6 +2159,7 @@ pub fn run() {
             preview_openalex_work,
             resolve_remote_metadata,
             import_by_identifier,
+            clear_remote_metadata_cache,
             resolve_doi_local,
             list_local_openalex_works,
             local_search,
