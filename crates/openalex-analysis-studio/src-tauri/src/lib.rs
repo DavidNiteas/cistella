@@ -12,10 +12,10 @@ use cistella_core::{
     AnnotationResolution, AppDirectories, CoreError, DEFAULT_SEARCH_PAGE_SIZE, DocumentAssetKind,
     ExportFormat, ExternalIdentifier, ImportFormat, LiteratureItemDraft, LiteratureItemType,
     MetricCode, Note as CoreNote, NoteDraft, OpenAlexSourcesAdapter, ReadingStatus, RecentVault,
-    SearchFieldScope, SearchIndexTaskState, SearchIndexTaskStatus, SearchQuery, SourceAdapter,
-    SourceRecord, SourceSearchQuery, Vault, VaultOpenOptions, available_source_adapters,
-    backup_vault as backup_vault_core, export_dataframe, load_recent_vaults,
-    migrate_vaults_to_installed as migrate_vaults_to_installed_core,
+    RemoteResolverRegistry, SearchFieldScope, SearchIndexTaskState, SearchIndexTaskStatus,
+    SearchQuery, SourceAdapter, SourceRecord, SourceSearchQuery, Vault, VaultOpenOptions,
+    available_source_adapters, backup_vault as backup_vault_core, export_dataframe,
+    load_recent_vaults, migrate_vaults_to_installed as migrate_vaults_to_installed_core,
     migrate_vaults_to_portable as migrate_vaults_to_portable_core, resolve_recent_vault_paths,
     restore_vault as restore_vault_core,
 };
@@ -263,14 +263,18 @@ fn parse_metric(metric: &str) -> MetricCode {
 }
 
 fn vault_from_state(state: &tauri::State<AppState>) -> CommandResult<Vault> {
-    let path = state
+    let path = current_vault_path(state)?;
+    Vault::open_any(path, VaultOpenOptions::default()).map_err(|e| e.to_string())
+}
+
+fn current_vault_path(state: &tauri::State<AppState>) -> CommandResult<PathBuf> {
+    state
         .connection
         .lock()
         .map_err(|e| e.to_string())?
         .vault_path
         .clone()
-        .ok_or_else(|| "No vault is connected".to_string())?;
-    Vault::open_any(path, VaultOpenOptions::default()).map_err(|e| e.to_string())
+        .ok_or_else(|| "No vault is connected".to_string())
 }
 
 fn idle_search_task_state() -> SearchIndexTaskState {
@@ -1026,6 +1030,43 @@ fn preview_openalex_work(
         .preview_literature_records(ImportFormat::OpenAlexWorks, vec![record])
         .map_err(|e| e.to_string())?;
     serde_json::to_value(preview).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn resolve_remote_metadata(
+    identifier: String,
+    force_refresh: bool,
+    state: tauri::State<'_, AppState>,
+) -> CommandResult<Value> {
+    let vault_path = current_vault_path(&state)?;
+    let record = RemoteResolverRegistry::new()
+        .resolve(&vault_path, &identifier, force_refresh)
+        .await
+        .map_err(|e| e.to_string())?;
+    serde_json::to_value(record).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn import_by_identifier(
+    identifier: String,
+    strategy: String,
+    state: tauri::State<'_, AppState>,
+) -> CommandResult<Value> {
+    let vault_path = current_vault_path(&state)?;
+    let record = RemoteResolverRegistry::new()
+        .resolve(&vault_path, &identifier, false)
+        .await
+        .map_err(|e| e.to_string())?;
+    let vault = vault_from_state(&state)?;
+    let policy = match strategy.as_str() {
+        "skip" => cistella_core::import::conflict::ConflictPolicy::Skip,
+        "create" => cistella_core::import::conflict::ConflictPolicy::Create,
+        _ => cistella_core::import::conflict::ConflictPolicy::Merge,
+    };
+    let result =
+        cistella_core::import::library_importer::import_single_record(&vault, record, policy)
+            .map_err(|e| e.to_string())?;
+    serde_json::to_value(result).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -2101,6 +2142,8 @@ pub fn run() {
             inspect_literature_import,
             import_literature_file,
             preview_openalex_work,
+            resolve_remote_metadata,
+            import_by_identifier,
             resolve_doi_local,
             list_local_openalex_works,
             local_search,

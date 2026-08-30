@@ -1,4 +1,4 @@
-use std::{fs, path::Path, path::PathBuf};
+use std::{fs, path::Path};
 
 use chrono::Utc;
 use uuid::Uuid;
@@ -47,10 +47,6 @@ impl LiteratureLibraryImporter {
         self.format
     }
 
-    fn source_batch_path(&self, vault: &Vault, batch_id: Uuid) -> PathBuf {
-        vault.sources_dir().join(format!("{batch_id}.json"))
-    }
-
     /// Parse bytes for this importer's configured format.
     pub fn parse(&self, bytes: &[u8]) -> Result<Vec<SourceRecord>> {
         match self.format {
@@ -91,91 +87,118 @@ impl LibraryImporter for LiteratureLibraryImporter {
     }
 
     fn commit(&self, vault: &Vault, preview: ImportPreview) -> Result<ImportResult> {
-        let batch = SourceBatch {
-            batch_id: preview.batch_id,
-            source_name: preview.source_name.clone(),
-            imported_at: Utc::now(),
-            records: preview
-                .items
-                .iter()
-                .map(|i| i.source_record.clone())
-                .collect(),
-        };
+        commit_import_preview(vault, &preview)
+    }
+}
 
-        let batch_path = self.source_batch_path(vault, batch.batch_id);
-        let batch_backup = save_batch_with_backup(vault, &batch_path, &batch)?;
+/// Persists a preview according to each item's selected conflict policy.
+///
+/// This is the implementation shared by `LiteratureLibraryImporter::commit` and
+/// single-record remote imports.
+pub fn commit_import_preview(vault: &Vault, preview: &ImportPreview) -> Result<ImportResult> {
+    let batch = SourceBatch {
+        batch_id: preview.batch_id,
+        source_name: preview.source_name.clone(),
+        imported_at: Utc::now(),
+        records: preview
+            .items
+            .iter()
+            .map(|i| i.source_record.clone())
+            .collect(),
+    };
 
-        let mut result = ImportResult {
-            batch_id: batch.batch_id,
-            ..ImportResult::default()
-        };
+    let batch_path = vault.sources_dir().join(format!("{}.json", batch.batch_id));
+    let batch_backup = save_batch_with_backup(vault, &batch_path, &batch)?;
 
-        let commit_outcome = (|| -> Result<Vec<Uuid>> {
-            let mut items = vault.load_literature_items()?;
-            let mut changed_item_ids = Vec::new();
-            for preview_item in &preview.items {
-                match preview_item.selected_policy {
-                    ConflictPolicy::Skip => {
-                        result.skipped += 1;
-                    }
-                    ConflictPolicy::Create => {
-                        let item = create_item_from_record(&preview_item.source_record);
-                        changed_item_ids.push(item.item_id);
-                        items.push(item);
-                        result.created += 1;
-                    }
-                    ConflictPolicy::Merge => {
-                        if let Some(existing_id) = preview_item.matched_item_id {
-                            if let Some(existing) =
-                                items.iter_mut().find(|i| i.item_id == existing_id)
-                            {
-                                merge_record_into_item(existing, &preview_item.source_record);
-                                changed_item_ids.push(existing_id);
-                                result.merged += 1;
-                            } else {
-                                // Item disappeared between preview and commit; create.
-                                let item = create_item_from_record(&preview_item.source_record);
-                                changed_item_ids.push(item.item_id);
-                                items.push(item);
-                                result.created += 1;
-                            }
+    let mut result = ImportResult {
+        batch_id: batch.batch_id,
+        ..ImportResult::default()
+    };
+
+    let commit_outcome = (|| -> Result<Vec<Uuid>> {
+        let mut items = vault.load_literature_items()?;
+        let mut changed_item_ids = Vec::new();
+        for preview_item in &preview.items {
+            match preview_item.selected_policy {
+                ConflictPolicy::Skip => {
+                    result.skipped += 1;
+                }
+                ConflictPolicy::Create => {
+                    let item = create_item_from_record(&preview_item.source_record);
+                    changed_item_ids.push(item.item_id);
+                    items.push(item);
+                    result.created += 1;
+                }
+                ConflictPolicy::Merge => {
+                    if let Some(existing_id) = preview_item.matched_item_id {
+                        if let Some(existing) = items.iter_mut().find(|i| i.item_id == existing_id)
+                        {
+                            merge_record_into_item(existing, &preview_item.source_record);
+                            changed_item_ids.push(existing_id);
+                            result.merged += 1;
                         } else {
+                            // Item disappeared between preview and commit; create.
                             let item = create_item_from_record(&preview_item.source_record);
                             changed_item_ids.push(item.item_id);
                             items.push(item);
                             result.created += 1;
                         }
+                    } else {
+                        let item = create_item_from_record(&preview_item.source_record);
+                        changed_item_ids.push(item.item_id);
+                        items.push(item);
+                        result.created += 1;
                     }
                 }
-            }
-            vault.save_literature_items(&items)?;
-            Ok(changed_item_ids)
-        })();
-
-        match commit_outcome {
-            Ok(changed_item_ids) => {
-                for item_id in changed_item_ids {
-                    vault.try_apply_search_index_change(SearchIndexChange::MetadataChanged {
-                        item_id,
-                    });
-                }
-                Ok(result)
-            }
-            Err(error) => {
-                if let Some(backup) = batch_backup {
-                    if let Err(rollback_error) = restore_batch(&batch_path, &backup) {
-                        return Err(crate::CoreError::LiteratureImportRollbackFailed {
-                            commit_error: error.to_string(),
-                            rollback_error: rollback_error.to_string(),
-                        });
-                    }
-                } else {
-                    let _ = fs::remove_file(&batch_path);
-                }
-                Err(error)
             }
         }
+        vault.save_literature_items(&items)?;
+        Ok(changed_item_ids)
+    })();
+
+    match commit_outcome {
+        Ok(changed_item_ids) => {
+            for item_id in changed_item_ids {
+                vault.try_apply_search_index_change(SearchIndexChange::MetadataChanged { item_id });
+            }
+            Ok(result)
+        }
+        Err(error) => {
+            if let Some(backup) = batch_backup {
+                if let Err(rollback_error) = restore_batch(&batch_path, &backup) {
+                    return Err(crate::CoreError::LiteratureImportRollbackFailed {
+                        commit_error: error.to_string(),
+                        rollback_error: rollback_error.to_string(),
+                    });
+                }
+            } else {
+                let _ = fs::remove_file(&batch_path);
+            }
+            Err(error)
+        }
     }
+}
+
+/// Imports a single `SourceRecord` directly using the given conflict policy.
+pub fn import_single_record(
+    vault: &Vault,
+    source_record: SourceRecord,
+    policy: ConflictPolicy,
+) -> Result<ImportResult> {
+    let existing = vault.load_literature_items()?;
+    let matched_item_id = find_matching_item(&source_record, &existing).map(|item| item.item_id);
+    let preview = ImportPreview {
+        batch_id: Uuid::new_v4(),
+        source_name: source_record.source_name.clone(),
+        items: vec![ImportPreviewItem {
+            record_id: source_record.record_id,
+            source_record,
+            matched_item_id,
+            default_policy: policy,
+            selected_policy: policy,
+        }],
+    };
+    commit_import_preview(vault, &preview)
 }
 
 fn save_batch_with_backup(

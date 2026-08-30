@@ -24,6 +24,7 @@ pub mod doi_resolver;
 pub mod library_importer;
 pub mod openalex_works_source;
 pub mod record_source;
+pub mod remote;
 pub mod ris_source;
 pub mod source_record;
 

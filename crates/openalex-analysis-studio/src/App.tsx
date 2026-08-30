@@ -117,6 +117,18 @@ type OpenAlexWorkCandidate = {
 
 type LiteratureImportFormat = 'bibtex' | 'ris' | 'openalex_works';
 
+type RemoteSourceRecord = {
+  recordId: string;
+  sourceName: string;
+  externalId?: string | null;
+  externalIdentifiers: { namespace: string; value: string }[];
+  title: string;
+  authors: string[];
+  publishedYear: number | null;
+  itemType: string;
+  rawFields: Record<string, string>;
+};
+
 type QuerySnapshot = {
   sourceType: string;
   metric: string;
@@ -260,6 +272,10 @@ const zh = {
   literatureCount: '文献条目',
   literatureKeyword: '关键词筛选',
   addLiterature: '新建条目',
+  importByIdentifier: '通过标识符导入',
+  identifierInputPlaceholder: 'DOI / PMID / ISBN / OpenAlex ID',
+  resolveIdentifier: '解析',
+  remoteResolveTitle: '在线解析结果',
   importLiterature: '导入文献',
   importLiteratureTitle: '导入文献',
   importLiteratureDesc: '选择文件预览并导入到当前库。',
@@ -481,6 +497,10 @@ const zh = {
 const en: Dict = {
   ...zh,
   importLiterature: 'Import literature',
+  importByIdentifier: 'Import by identifier',
+  identifierInputPlaceholder: 'DOI / PMID / ISBN / OpenAlex ID',
+  resolveIdentifier: 'Resolve',
+  remoteResolveTitle: 'Remote resolution result',
   importLiteratureTitle: 'Import literature',
   importLiteratureDesc: 'Choose a file to preview and import into the current vault.',
   importLiteratureFormat: 'Import format',
@@ -845,6 +865,11 @@ export default function App() {
   const [literatureImportPreview, setLiteratureImportPreview] = useState<LiteratureImportPreview | null>(null);
   const [literatureImportError, setLiteratureImportError] = useState('');
   const [literatureImportResult, setLiteratureImportResult] = useState<LiteratureImportResult | null>(null);
+  const [identifierInput, setIdentifierInput] = useState('');
+  const [remoteResolveLoading, setRemoteResolveLoading] = useState(false);
+  const [remoteResolveError, setRemoteResolveError] = useState('');
+  const [remoteResolvePreview, setRemoteResolvePreview] = useState<LiteratureImportPreview | null>(null);
+  const [remoteImportStrategy, setRemoteImportStrategy] = useState<'merge' | 'skip' | 'create'>('merge');
   const [openAlexWorksDir, setOpenAlexWorksDir] = useState('');
   const [openAlexQuery, setOpenAlexQuery] = useState('');
   const [openAlexCandidates, setOpenAlexCandidates] = useState<OpenAlexWorkCandidate[]>([]);
@@ -1466,6 +1491,76 @@ export default function App() {
     });
   };
 
+  const findMatchingRemoteItem = (record: RemoteSourceRecord): string | null => {
+    const namespaces = new Set(['doi', 'isbn', 'issn', 'pmid', 'openalex']);
+    for (const item of literatureItems) {
+      for (const recordId of record.externalIdentifiers) {
+        if (!namespaces.has(recordId.namespace)) continue;
+        for (const itemId of item.externalIdentifiers) {
+          if (itemId.namespace === recordId.namespace && itemId.value.toLowerCase() === recordId.value.toLowerCase()) {
+            return item.itemId;
+          }
+        }
+      }
+    }
+    return null;
+  };
+
+  const resolveRemoteMetadata = async () => {
+    const raw = identifierInput.trim();
+    if (!raw) return;
+    setRemoteResolveLoading(true);
+    setRemoteResolveError('');
+    setRemoteResolvePreview(null);
+    try {
+      const record = await invoke('resolve_remote_metadata', { identifier: raw, forceRefresh: false }) as RemoteSourceRecord;
+      const matchedItemId = findMatchingRemoteItem(record);
+      const preview: LiteratureImportPreview = {
+        batchId: 'remote',
+        sourceName: record.sourceName,
+        items: [{
+          recordId: record.recordId,
+          sourceRecord: record,
+          matchedItemId,
+          defaultPolicy: 'merge',
+          selectedPolicy: remoteImportStrategy,
+        }],
+      };
+      setRemoteResolvePreview(preview);
+    } catch (e: any) {
+      setRemoteResolveError(String(e?.message ?? e));
+      setRemoteResolvePreview(null);
+    } finally {
+      setRemoteResolveLoading(false);
+    }
+  };
+
+  const updateRemoteImportPolicy = (policy: 'merge' | 'skip' | 'create') => {
+    setRemoteImportStrategy(policy);
+    setRemoteResolvePreview(prev => {
+      if (!prev) return prev;
+      return { ...prev, items: prev.items.map(item => ({ ...item, selectedPolicy: policy })) };
+    });
+  };
+
+  const commitRemoteImport = async () => {
+    if (!remoteResolvePreview) return;
+    setBusy(true);
+    setRemoteResolveError('');
+    try {
+      const result = await invoke('import_by_identifier', { identifier: identifierInput.trim(), strategy: remoteImportStrategy }) as LiteratureImportResult;
+      setRemoteResolvePreview(null);
+      setIdentifierInput('');
+      setLiteratureImportResult(result);
+      const request = captureVaultRequest();
+      await loadPersonalLibrary(request);
+    } catch (e: any) {
+      setRemoteResolveError(String(e?.message ?? e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const refreshLocalSearchHealth = async (request: VaultRequestContext = captureVaultRequest()): Promise<LocalSearchTask | null> => {
     if (!request.expectedVaultPath || !isCurrentVaultRequest(request)) return null;
     try {
@@ -1960,6 +2055,8 @@ export default function App() {
             <input placeholder={t.openAlexWorksQuery} value={openAlexQuery} onChange={e => setOpenAlexQuery(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void searchOpenAlexWorks(); }} />
             <button className="secondary" onClick={() => void searchOpenAlexWorks()} disabled={busy || openAlexLoading || !openAlexWorksDir || !openAlexQuery.trim()}>{t.searchOpenAlexWorks}</button>
           </> : <button className="secondary" onClick={inspectLiteratureImport} disabled={busy}>{t.importLiterature}</button>}
+          <input placeholder={t.identifierInputPlaceholder} value={identifierInput} onChange={e => setIdentifierInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void resolveRemoteMetadata(); }} />
+          <button className="secondary" onClick={() => void resolveRemoteMetadata()} disabled={busy || remoteResolveLoading || !identifierInput.trim()}>{t.resolveIdentifier}</button>
           <button onClick={beginNewLiterature} disabled={busy}>{t.addLiterature}</button>
         </div>}
         {hasVault && literatureImportFormat === 'openalex_works' && (openAlexLoading || openAlexError || openAlexCandidates.length > 0) && <div className="card span3">
@@ -2010,6 +2107,35 @@ export default function App() {
           <button className="secondary" onClick={() => setLiteratureImportResult(null)}>{t.cancel}</button>
         </div>}
         {hasVault && literatureImportError && <div className="card span3"><h2>{t.failed}</h2><p>{literatureImportError}</p></div>}
+        {hasVault && (remoteResolveLoading || remoteResolveError || remoteResolvePreview) && <div className="card span3 literatureImportPreview">
+          <h2>{t.remoteResolveTitle}</h2>
+          {remoteResolveLoading && <p>{lang === 'zh' ? '解析中…' : 'Resolving…'}</p>}
+          {remoteResolveError && <p className="literatureFeedback">{remoteResolveError}</p>}
+          {remoteResolvePreview && <>
+            <p>{t.importPreviewTitle}: {remoteResolvePreview.items.length}</p>
+            <div className="importPreviewList">{remoteResolvePreview.items.map(item => {
+              const matched = item.matchedItemId != null;
+              const ids = item.sourceRecord.externalIdentifiers.map(id => `${id.namespace}: ${id.value}`).join(' · ');
+              return <article key={item.recordId} className={`importPreviewItem ${matched ? 'matched' : ''}`}>
+                <div>
+                  <strong>{item.sourceRecord.title || '—'}</strong>
+                  <small>{item.sourceRecord.authors.join(', ') || '—'}{item.sourceRecord.publishedYear ? ` · ${item.sourceRecord.publishedYear}` : ''}</small>
+                  {ids && <small>{ids}</small>}
+                  <small className="importConflict">{matched ? t.importConflictMatched : t.importConflictNew}</small>
+                </div>
+                <select value={remoteImportStrategy} onChange={e => updateRemoteImportPolicy(e.target.value as 'merge' | 'skip' | 'create')} disabled={busy}>
+                  <option value="merge">{t.importPolicyMerge}</option>
+                  <option value="skip">{t.importPolicySkip}</option>
+                  <option value="create">{t.importPolicyCreate}</option>
+                </select>
+              </article>;
+            })}</div>
+            <div className="actions">
+              <button onClick={() => void commitRemoteImport()} disabled={busy}>{t.importCommit}</button>
+              <button className="secondary" onClick={() => { setRemoteResolvePreview(null); setRemoteResolveError(''); }} disabled={busy}>{t.cancel}</button>
+            </div>
+          </>}
+        </div>}
         {hasVault && literatureEditorOpen ? <div className="card span3 literatureEditor">
           <h2>{editingLiteratureId ? t.editLiterature : t.addLiterature}</h2>
           <label className="field"><span>{t.title}</span><input value={literatureDraft.title} onChange={e => setLiteratureDraft(d => ({ ...d, title: e.target.value }))} /></label>

@@ -114,4 +114,10 @@ pub enum CoreError {
     MigrationFailed(String),
     #[error("update check failed: {0}")]
     UpdateCheckFailed(String),
+    #[error("remote metadata unavailable for {resolver}: {reason}")]
+    RemoteMetadataUnavailable { resolver: String, reason: String },
+    #[error("remote metadata not found for identifier {identifier}")]
+    RemoteMetadataNotFound { identifier: String },
+    #[error("remote metadata response malformed for {identifier}: {reason}")]
+    RemoteMetadataMalformed { identifier: String, reason: String },
 }
