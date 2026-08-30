@@ -1,3 +1,4 @@
+pub mod app_dirs;
 pub mod dataset;
 pub mod error;
 pub mod export;
@@ -14,6 +15,11 @@ mod secure_user_records;
 pub mod source_adapter;
 pub mod vault;
 
+pub use app_dirs::{
+    AppConfig, AppDirectories, RecentVault, WindowSize, load_app_config, load_recent_vaults,
+    make_vault_paths_portable, migrate_vaults_to_installed, migrate_vaults_to_portable,
+    resolve_recent_vault_paths, save_app_config, save_recent_vaults,
+};
 pub use dataset::{Dataset, DatasetOpenOptions};
 pub use error::{CoreError, Result};
 pub use export::{ExportFormat, export_dataframe};

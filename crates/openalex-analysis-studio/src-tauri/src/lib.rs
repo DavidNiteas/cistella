@@ -9,11 +9,14 @@ use std::{
 };
 
 use cistella_core::{
-    AnnotationResolution, CoreError, DEFAULT_SEARCH_PAGE_SIZE, DocumentAssetKind, ExportFormat,
-    ExternalIdentifier, ImportFormat, LiteratureItemDraft, LiteratureItemType, MetricCode,
-    Note as CoreNote, NoteDraft, OpenAlexSourcesAdapter, ReadingStatus, SearchFieldScope,
-    SearchIndexTaskState, SearchIndexTaskStatus, SearchQuery, SourceAdapter, SourceRecord,
-    SourceSearchQuery, Vault, VaultOpenOptions, available_source_adapters, export_dataframe,
+    AnnotationResolution, AppDirectories, CoreError, DEFAULT_SEARCH_PAGE_SIZE, DocumentAssetKind,
+    ExportFormat, ExternalIdentifier, ImportFormat, LiteratureItemDraft, LiteratureItemType,
+    MetricCode, Note as CoreNote, NoteDraft, OpenAlexSourcesAdapter, ReadingStatus, RecentVault,
+    SearchFieldScope, SearchIndexTaskState, SearchIndexTaskStatus, SearchQuery, SourceAdapter,
+    SourceRecord, SourceSearchQuery, Vault, VaultOpenOptions, available_source_adapters,
+    export_dataframe, load_recent_vaults,
+    migrate_vaults_to_installed as migrate_vaults_to_installed_core,
+    migrate_vaults_to_portable as migrate_vaults_to_portable_core, resolve_recent_vault_paths,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -116,6 +119,60 @@ struct SearchIndexTaskControlRequest {
 struct VaultRequestContext {
     expected_generation: u64,
     expected_vault_path: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct AppDirectoriesDto {
+    config_dir: String,
+    recent_vaults_path: String,
+    cache_dir: String,
+    is_portable_mode: bool,
+    portable_root: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RecentVaultDto {
+    path: String,
+    name: String,
+    opened_at: Option<String>,
+}
+
+fn current_app_directories() -> CommandResult<AppDirectories> {
+    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+    let exe_dir = exe
+        .parent()
+        .ok_or_else(|| "failed to resolve executable directory".to_string())?;
+    AppDirectories::from_exe_dir(exe_dir).map_err(|e| e.to_string())
+}
+
+fn app_directories_to_dto(dirs: &AppDirectories) -> CommandResult<AppDirectoriesDto> {
+    Ok(AppDirectoriesDto {
+        config_dir: dirs.config_dir().to_string_lossy().to_string(),
+        recent_vaults_path: dirs.recent_vaults_path().to_string_lossy().to_string(),
+        cache_dir: dirs.cache_dir().to_string_lossy().to_string(),
+        is_portable_mode: dirs.is_portable_mode(),
+        portable_root: dirs
+            .portable_root()
+            .map(|p| p.to_string_lossy().to_string()),
+    })
+}
+
+fn recent_vault_from_dto(dto: RecentVaultDto) -> RecentVault {
+    RecentVault {
+        path: dto.path,
+        name: dto.name,
+        opened_at: dto.opened_at,
+    }
+}
+
+fn recent_vault_to_dto(vault: RecentVault) -> RecentVaultDto {
+    RecentVaultDto {
+        path: vault.path,
+        name: vault.name,
+        opened_at: vault.opened_at,
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -1404,6 +1461,54 @@ fn source_adapters() -> CommandResult<Value> {
 }
 
 #[tauri::command]
+fn app_directories() -> CommandResult<AppDirectoriesDto> {
+    let dirs = current_app_directories()?;
+    app_directories_to_dto(&dirs)
+}
+
+#[tauri::command]
+fn is_portable_mode() -> CommandResult<bool> {
+    Ok(current_app_directories()?.is_portable_mode())
+}
+
+#[tauri::command]
+fn recent_vaults() -> CommandResult<Vec<RecentVaultDto>> {
+    let dirs = current_app_directories()?;
+    let vaults = load_recent_vaults(dirs.recent_vaults_path()).map_err(|e| e.to_string())?;
+    let vaults = if dirs.is_portable_mode() {
+        resolve_recent_vault_paths(dirs.portable_root().unwrap(), &vaults)
+    } else {
+        vaults
+    };
+    Ok(vaults.into_iter().map(recent_vault_to_dto).collect())
+}
+
+#[tauri::command]
+fn update_recent_vaults(vaults: Vec<RecentVaultDto>) -> CommandResult<()> {
+    let dirs = current_app_directories()?;
+    let vaults: Vec<RecentVault> = vaults.into_iter().map(recent_vault_from_dto).collect();
+    dirs.save_recent_vaults(&vaults).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn migrate_vaults_to_portable(vaults: Vec<RecentVaultDto>) -> CommandResult<Vec<RecentVaultDto>> {
+    let dirs = current_app_directories()?;
+    let vaults: Vec<RecentVault> = vaults.into_iter().map(recent_vault_from_dto).collect();
+    migrate_vaults_to_portable_core(&dirs, &vaults)
+        .map_err(|e| e.to_string())
+        .map(|migrated| migrated.into_iter().map(recent_vault_to_dto).collect())
+}
+
+#[tauri::command]
+fn migrate_vaults_to_installed(vaults: Vec<RecentVaultDto>) -> CommandResult<Vec<RecentVaultDto>> {
+    let dirs = current_app_directories()?;
+    let vaults: Vec<RecentVault> = vaults.into_iter().map(recent_vault_from_dto).collect();
+    migrate_vaults_to_installed_core(&dirs, &vaults)
+        .map_err(|e| e.to_string())
+        .map(|migrated| migrated.into_iter().map(recent_vault_to_dto).collect())
+}
+
+#[tauri::command]
 fn search_sources(
     req: SearchSourcesRequest,
     state: tauri::State<AppState>,
@@ -1990,6 +2095,12 @@ pub fn run() {
             vault_overview,
             vault_context,
             source_adapters,
+            app_directories,
+            is_portable_mode,
+            recent_vaults,
+            update_recent_vaults,
+            migrate_vaults_to_portable,
+            migrate_vaults_to_installed,
             search_sources,
             top_sources,
             export_top_sources,

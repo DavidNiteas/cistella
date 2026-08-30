@@ -39,6 +39,18 @@ type VaultRequestContext = {
   expectedGeneration: number;
   expectedVaultPath: string;
 };
+type AppDirectoriesDto = {
+  configDir: string;
+  recentVaultsPath: string;
+  cacheDir: string;
+  isPortableMode: boolean;
+  portableRoot: string | null;
+};
+type RecentVaultDto = {
+  path: string;
+  name: string;
+  openedAt: string | null;
+};
 
 type ImportPreview = {
   rawSourcesDir?: string;
@@ -338,6 +350,17 @@ const zh = {
   refreshVault: '刷新库信息',
   currentVault: '当前库',
   vaultId: '库 ID',
+  runMode: '运行模式',
+  portableMode: '便携模式',
+  installedMode: '安装模式',
+  configDir: '配置目录',
+  recentVaultsPath: '最近库列表',
+  migrateToPortable: '迁移到便携目录',
+  migrateToInstalled: '迁移到安装目录',
+  migrateToPortableConfirm: '确定将当前最近库迁移到便携目录吗？原 Vault 不会被删除。',
+  migrateToInstalledConfirm: '确定将当前最近库迁移到系统安装目录吗？原 Vault 不会被删除。',
+  migratedToPortable: '已迁移到便携目录',
+  migratedToInstalled: '已迁移到安装目录',
   chooseFile: '选择文件',
   connect: '连接',
   importFromOpenAlex: '从 OpenAlex 导入',
@@ -554,6 +577,17 @@ const en: Dict = {
   refreshVault: 'Refresh vault',
   currentVault: 'Current vault',
   vaultId: 'Vault ID',
+  runMode: 'Run mode',
+  portableMode: 'Portable',
+  installedMode: 'Installed',
+  configDir: 'Config directory',
+  recentVaultsPath: 'Recent vaults path',
+  migrateToPortable: 'Migrate to portable',
+  migrateToInstalled: 'Migrate to installed',
+  migrateToPortableConfirm: 'Migrate current recent vaults into the portable directory? Original vaults will not be deleted.',
+  migrateToInstalledConfirm: 'Migrate current recent vaults into the installed directory? Original vaults will not be deleted.',
+  migratedToPortable: 'Migrated to portable directory',
+  migratedToInstalled: 'Migrated to installed directory',
   chooseFile: 'Choose file',
   connect: 'Connect',
   importFromOpenAlex: 'Import from OpenAlex',
@@ -674,8 +708,17 @@ function parseNoteConflict(error: unknown): { noteId: string; message: string } 
   }
   return null;
 }
+function baseName(p: string) { const s = p.replace(/\\/g, '/'); return s.slice(s.lastIndexOf('/') + 1) || p; }
 function loadRecent(): string[] { try { return JSON.parse(localStorage.getItem('recentVaults') || '[]'); } catch { return []; } }
 function remember(path: string) { const next = [path, ...loadRecent().filter(p => p !== path)].slice(0, 6); localStorage.setItem('recentVaults', JSON.stringify(next)); return next; }
+async function fetchRecentVaults(): Promise<RecentVaultDto[]> { try { return await invoke('recent_vaults') as RecentVaultDto[]; } catch { return []; } }
+async function persistRecentVaults(vaults: RecentVaultDto[]) { try { await invoke('update_recent_vaults', { vaults }); } catch { /* keep local state even if backend persist fails */ } }
+async function rememberBackend(path: string, existing: RecentVaultDto[]): Promise<RecentVaultDto[]> {
+  const name = baseName(path);
+  const next = [{ path, name, openedAt: new Date().toISOString() }, ...existing.filter(v => v.path !== path)].slice(0, 6);
+  await persistRecentVaults(next);
+  return next;
+}
 function loadRecentQueries(): QuerySnapshot[] { try { return JSON.parse(localStorage.getItem('recentSourceQueries') || '[]'); } catch { return []; } }
 function rememberQuery(snapshot: QuerySnapshot) { const next = [snapshot, ...loadRecentQueries().filter(q => JSON.stringify(q) !== JSON.stringify(snapshot))].slice(0, 5); localStorage.setItem('recentSourceQueries', JSON.stringify(next)); return next; }
 function queryLabel(q: QuerySnapshot, lang: Lang) {
@@ -731,7 +774,8 @@ export default function App() {
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
   const [lastImport, setLastImport] = useState<ImportRequest | null>(null);
   const [importError, setImportError] = useState('');
-  const [recentVaults, setRecentVaults] = useState<string[]>(loadRecent());
+  const [recentVaults, setRecentVaults] = useState<RecentVaultDto[]>([]);
+  const [appDirs, setAppDirs] = useState<AppDirectoriesDto | null>(null);
   const [sourceAdapters, setSourceAdapters] = useState<Adapter[]>([{ name: 'OpenAlex', kind: 'source-import', is_default: true }]);
   const [overview, setOverview] = useState<Overview | null>(null);
   const [analysisError, setAnalysisError] = useState('');
@@ -844,20 +888,28 @@ export default function App() {
     let cancelled = false;
     const restoreRecentVault = async () => {
       setStatus(t.restoring);
-      const candidates = loadRecent();
-      for (const path of candidates) {
+      const [dirs, candidates] = await Promise.all([
+        invoke('app_directories').catch(() => null) as Promise<AppDirectoriesDto | null>,
+        fetchRecentVaults(),
+      ]);
+      if (cancelled) return;
+      if (dirs) setAppDirs(dirs);
+      setRecentVaults(candidates);
+      for (const vault of candidates) {
         const generation = beginVaultConnection();
         try {
-          const ctx = await invoke('connect_vault', { path, generation }) as VaultContext;
+          const ctx = await invoke('connect_vault', { path: vault.path, generation }) as VaultContext;
           if (cancelled || !isCurrentVaultConnection(generation)) return;
-          const nextPath = applyVaultContext(ctx, path, generation);
+          const nextPath = applyVaultContext(ctx, vault.path, generation);
           if (!nextPath) return;
           const request = { expectedGeneration: generation, expectedVaultPath: nextPath };
           await loadPersonalLibrary(request);
           if (cancelled || !isCurrentVaultRequest(request)) return;
-          setRecentVaults(remember(path));
+          const next = await rememberBackend(nextPath, candidates);
+          if (!cancelled) setRecentVaults(next);
+          remember(nextPath);
           setVaultError('');
-          setStatus(`${t.connected}: ${path}`);
+          setStatus(`${t.connected}: ${nextPath}`);
           await refresh(undefined, true, request);
           if (!cancelled && isCurrentVaultRequest(request)) setRestored(true);
           return;
@@ -1062,8 +1114,10 @@ export default function App() {
       if (!nextPath) return false;
       const request = { expectedGeneration: generation, expectedVaultPath: nextPath };
       if (!isCurrentVaultRequest(request)) return false;
-      setRecentVaults(remember(path));
-      setStatus(`${t.connected}: ${path}`);
+      const next = await rememberBackend(nextPath, recentVaults);
+      setRecentVaults(next);
+      remember(nextPath);
+      setStatus(`${t.connected}: ${nextPath}`);
       setWorkspace('source');
       const [, refreshed] = await Promise.all([loadPersonalLibrary(request), refresh(undefined, true, request)]);
       if (!isCurrentVaultRequest(request)) return false;
@@ -1079,6 +1133,26 @@ export default function App() {
       setRestored(true);
       return false;
     }
+  };
+
+  const migrateToPortable = async () => {
+    if (!window.confirm(t.migrateToPortableConfirm)) return;
+    const migrated = await invoke('migrate_vaults_to_portable', { vaults: recentVaults }) as RecentVaultDto[];
+    setRecentVaults(migrated);
+    await persistRecentVaults(migrated);
+    const dirs = await invoke('app_directories') as AppDirectoriesDto;
+    setAppDirs(dirs);
+    setStatus(t.migratedToPortable);
+  };
+
+  const migrateToInstalled = async () => {
+    if (!window.confirm(t.migrateToInstalledConfirm)) return;
+    const migrated = await invoke('migrate_vaults_to_installed', { vaults: recentVaults }) as RecentVaultDto[];
+    setRecentVaults(migrated);
+    await persistRecentVaults(migrated);
+    const dirs = await invoke('app_directories') as AppDirectoriesDto;
+    setAppDirs(dirs);
+    setStatus(t.migratedToInstalled);
   };
 
   const performImport = async (request: ImportRequest) => {
@@ -1674,10 +1748,11 @@ export default function App() {
           <h2>{t.currentVault}</h2>
           <div className="sourceRow"><div className="path">{short(vaultPath)}</div><button className="light" onClick={() => void run(() => connect(vaultPath))} disabled={busy || !vaultPath}>{t.openVault}</button></div>
           <small>{vaultSummary?.vault_id ? `vault_id: ${vaultSummary.vault_id}` : t.noData}</small>
+          <small>{appDirs ? `${t.runMode}: ${appDirs.isPortableMode ? t.portableMode : t.installedMode}` : ''}</small>
         </div>
         <div className="card span2 compact">
           <h2>{t.recentVaults}</h2>
-          <div className="recent">{recentVaults.length ? recentVaults.map((r) => <button key={r} onClick={() => void run(() => connect(r))}>{short(r)}</button>) : <small>{t.noData}</small>}</div>
+          <div className="recent">{recentVaults.length ? recentVaults.map((r) => <button key={r.path} title={r.path} onClick={() => void run(() => connect(r.path))}>{short(r.name || r.path)}</button>) : <small>{t.noData}</small>}</div>
         </div>
         <div className="card span2">
           <h2>{t.layout}</h2>
@@ -1936,6 +2011,18 @@ export default function App() {
           <h2>{t.language}</h2>
           <button className={lang === 'zh' ? 'selected secondary' : 'secondary'} onClick={() => { setLang('zh'); localStorage.setItem('lang', 'zh'); }}>{t.chinese}</button>
           <button className={lang === 'en' ? 'selected secondary' : 'secondary'} onClick={() => { setLang('en'); localStorage.setItem('lang', 'en'); }}>{t.english}</button>
+        </div>
+        <div className="card span2">
+          <h2>{t.runMode}</h2>
+          <p><strong>{appDirs ? (appDirs.isPortableMode ? t.portableMode : t.installedMode) : '—'}</strong></p>
+          {appDirs && <>
+            <p><small>{t.configDir}: {short(appDirs.configDir)}</small></p>
+            <p><small>{t.recentVaultsPath}: {short(appDirs.recentVaultsPath)}</small></p>
+          </>}
+          <div className="actions">
+            <button className="secondary" onClick={() => void run(migrateToPortable)} disabled={busy || !appDirs || appDirs.isPortableMode}>{t.migrateToPortable}</button>
+            <button className="secondary" onClick={() => void run(migrateToInstalled)} disabled={busy || !appDirs || !appDirs.isPortableMode}>{t.migrateToInstalled}</button>
+          </div>
         </div>
         <div className="card span2">
           <h2>{t.brand}</h2>

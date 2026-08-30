@@ -102,4 +102,12 @@ pub enum CoreError {
         commit_error: String,
         rollback_error: String,
     },
+    #[error("failed to detect portable mode: {0}")]
+    PortableModeDetectionFailed(String),
+    #[error("failed to parse recent vaults: {0}")]
+    RecentVaultsParseFailed(String),
+    #[error("failed to parse app config: {0}")]
+    AppConfigParseFailed(String),
+    #[error("vault migration failed: {0}")]
+    MigrationFailed(String),
 }
