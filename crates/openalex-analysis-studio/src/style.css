@@ -18,3 +18,10 @@
 @media (max-width: 1250px) { .vaultAssetGroup > .cardHead { flex-direction: column; gap: 10px; } }
 /* Work order 09 / M3: session-first Reading workspace. */
 .readingSessions{overflow:auto}.readingSessionList{display:grid;gap:9px;margin-top:12px}.readingSession{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:12px;border:1px solid #e5e8f1;background:#fafbff;border-radius:11px}.readingSession.unavailable,.readingAsset.unavailable{background:#fff9ee;border-color:#f1dfb9}.readingSessionMeta{display:grid;gap:4px;min-width:0;flex:1}.readingSessionMeta strong{color:#424663;font-size:13px}.readingSessionMeta small{color:#727893;font-size:11px;overflow-wrap:anywhere}.sessionWarning{color:#9a6b17!important}.readingAssetList{margin-top:10px}.readingAsset{align-items:flex-start}.readingAsset .fileActions button{background:#695cf5;color:#fff;border:0;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:900;cursor:pointer}@media(max-width:1250px){.readingSession{flex-direction:column}.readingSession .fileActions{justify-content:flex-start}}
+/* Work order 14 / M2: migration wizard and backup/restore dialog. */
+.modalOverlay { position: fixed; inset: 0; background: rgba(31,33,56,0.45); display: grid; place-items: center; z-index: 1000; }
+.modalCard { background: #fff; border-radius: 16px; padding: 22px; width: 560px; max-width: 90vw; box-shadow: 0 20px 60px rgba(31,33,56,0.25); }
+.migrationStep { display: grid; gap: 12px; margin-top: 12px; }
+.migrationStep .radioLabel { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.migrationStep .radioLabel input { margin: 0; }
+.errorText { color: #a64857; margin: 12px 0 0; font-size: 13px; }

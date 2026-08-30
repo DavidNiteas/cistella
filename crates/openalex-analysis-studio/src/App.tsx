@@ -10,6 +10,7 @@ type Adapter = { name: string; kind: string; is_default: boolean };
 type Workspace = 'vault' | 'reading' | 'search' | 'source' | 'settings' | 'notes';
 type SourceTab = 'overview' | 'table' | 'visual' | 'metrics' | 'export';
 type Lang = 'zh' | 'en';
+type MigrationMode = 'portable' | 'installed';
 type Overview = {
   source_count?: number;
   journal_count?: number;
@@ -46,6 +47,7 @@ type AppDirectoriesDto = {
   isPortableMode: boolean;
   portableRoot: string | null;
 };
+type UpdateCheck = { currentVersion: string; latestVersion: string; hasUpdate: boolean };
 type RecentVaultDto = {
   path: string;
   name: string;
@@ -361,6 +363,22 @@ const zh = {
   migrateToInstalledConfirm: '确定将当前最近库迁移到系统安装目录吗？原 Vault 不会被删除。',
   migratedToPortable: '已迁移到便携目录',
   migratedToInstalled: '已迁移到安装目录',
+  migrationWizard: '迁移向导',
+  migrationSource: '源 Vault',
+  migrationTarget: '目标路径',
+  migrationMode: '目标模式',
+  migrationModePortable: '便携模式',
+  migrationModeInstalled: '安装模式',
+  migrationAlreadyPortable: '当前已经是便携模式',
+  migrationAlreadyInstalled: '当前已经是安装模式',
+  migrationPreview: '预览目标路径',
+  migrationNext: '下一步',
+  migrationBack: '上一步',
+  migrationConfirm: '确认迁移',
+  backupVault: '备份当前库',
+  restoreVault: '从备份恢复',
+  backupComplete: '备份完成',
+  restoreComplete: '恢复完成',
   chooseFile: '选择文件',
   connect: '连接',
   importFromOpenAlex: '从 OpenAlex 导入',
@@ -418,6 +436,10 @@ const zh = {
   language: '界面语言',
   chinese: '中文',
   english: 'English',
+  version: '版本',
+  updateCheck: '更新检查',
+  upToDate: '已是最新',
+  updateAvailable: '有新版本可用',
   metricOptions: [
     ['h_index', 'H-index'],
     ['cited_by_count', '总被引'],
@@ -588,6 +610,22 @@ const en: Dict = {
   migrateToInstalledConfirm: 'Migrate current recent vaults into the installed directory? Original vaults will not be deleted.',
   migratedToPortable: 'Migrated to portable directory',
   migratedToInstalled: 'Migrated to installed directory',
+  migrationWizard: 'Migration wizard',
+  migrationSource: 'Source vault',
+  migrationTarget: 'Target path',
+  migrationMode: 'Target mode',
+  migrationModePortable: 'Portable',
+  migrationModeInstalled: 'Installed',
+  migrationAlreadyPortable: 'Already in portable mode',
+  migrationAlreadyInstalled: 'Already in installed mode',
+  migrationPreview: 'Preview target path',
+  migrationNext: 'Next',
+  migrationBack: 'Back',
+  migrationConfirm: 'Confirm migration',
+  backupVault: 'Backup current vault',
+  restoreVault: 'Restore from backup',
+  backupComplete: 'Backup complete',
+  restoreComplete: 'Restore complete',
   chooseFile: 'Choose file',
   connect: 'Connect',
   importFromOpenAlex: 'Import from OpenAlex',
@@ -642,6 +680,10 @@ const en: Dict = {
   language: 'Language',
   chinese: '中文',
   english: 'English',
+  version: 'Version',
+  updateCheck: 'Update check',
+  upToDate: 'Up to date',
+  updateAvailable: 'Update available',
   metricOptions: [
     ['h_index', 'H-index'],
     ['cited_by_count', 'Cited by'],
@@ -776,6 +818,8 @@ export default function App() {
   const [importError, setImportError] = useState('');
   const [recentVaults, setRecentVaults] = useState<RecentVaultDto[]>([]);
   const [appDirs, setAppDirs] = useState<AppDirectoriesDto | null>(null);
+  const [appVersion, setAppVersion] = useState<string | null>(null);
+  const [updateCheck, setUpdateCheck] = useState<UpdateCheck | null>(null);
   const [sourceAdapters, setSourceAdapters] = useState<Adapter[]>([{ name: 'OpenAlex', kind: 'source-import', is_default: true }]);
   const [overview, setOverview] = useState<Overview | null>(null);
   const [analysisError, setAnalysisError] = useState('');
@@ -833,6 +877,14 @@ export default function App() {
   const [annotationLoading, setAnnotationLoading] = useState(false);
   const [annotationError, setAnnotationError] = useState('');
   const [buildArrow, setBuildArrow] = useState(true);
+  const [migrationOpen, setMigrationOpen] = useState(false);
+  const [migrationStep, setMigrationStep] = useState(1);
+  const [migrationSource, setMigrationSource] = useState('');
+  const [migrationName, setMigrationName] = useState('');
+  const [migrationMode, setMigrationMode] = useState<MigrationMode>('portable');
+  const [migrationTargetPreview, setMigrationTargetPreview] = useState('');
+  const [migrationError, setMigrationError] = useState('');
+  const [backupRestoreError, setBackupRestoreError] = useState('');
   const hasVault = Boolean(vaultPath && vaultSummary);
   const editingLiteratureItem = editingLiteratureId ? literatureItems.find(item => item.itemId === editingLiteratureId) : undefined;
   const assetsForItem = (itemId: string) => documentAssets.filter(asset => asset.itemId === itemId);
@@ -849,6 +901,21 @@ export default function App() {
   const loadAdapters = async () => { try { setSourceAdapters(rows(await invoke('source_adapters')).map(v => ({ name: String(v.name ?? 'Unknown'), kind: String(v.kind ?? 'source-import'), is_default: Boolean(v.is_default) }))); } catch { /* keep fallback */ } };
 
   useEffect(() => { void loadAdapters(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    const loadVersionInfo = async () => {
+      try {
+        const version = await invoke('get_app_version') as string;
+        if (!cancelled) setAppVersion(version);
+      } catch { /* ignore */ }
+      try {
+        const check = await invoke('check_update') as UpdateCheck;
+        if (!cancelled) setUpdateCheck(check);
+      } catch { /* ignore */ }
+    };
+    void loadVersionInfo();
+    return () => { cancelled = true; };
+  }, []);
   useEffect(() => { localStorage.setItem('workspace', workspace); }, [workspace]);
   useEffect(() => { localStorage.setItem('sourceTab', sourceTab); }, [sourceTab]);
   useEffect(() => { vaultPathRef.current = vaultPath; }, [vaultPath]);
@@ -1153,6 +1220,85 @@ export default function App() {
     const dirs = await invoke('app_directories') as AppDirectoriesDto;
     setAppDirs(dirs);
     setStatus(t.migratedToInstalled);
+  };
+
+  const openMigrationWizard = () => {
+    setMigrationSource(vaultPath || '');
+    setMigrationName(vaultPath ? baseName(vaultPath) : '');
+    setMigrationMode(appDirs?.isPortableMode ? 'installed' : 'portable');
+    setMigrationStep(1);
+    setMigrationError('');
+    setMigrationTargetPreview('');
+    setMigrationOpen(true);
+  };
+
+  const closeMigrationWizard = () => {
+    setMigrationOpen(false);
+    setMigrationError('');
+  };
+
+  const pickMigrationSource = async () => {
+    const picked = await dir();
+    if (!picked) return;
+    setMigrationSource(picked);
+    if (!migrationName) setMigrationName(baseName(picked));
+  };
+
+  const computeMigrationTarget = async () => {
+    if (!migrationSource) return;
+    const dirs = await invoke('app_directories') as AppDirectoriesDto;
+    const root = migrationMode === 'portable' ? (dirs.portableRoot || dirs.configDir) : dirs.configDir;
+    const parent = root.replace(/\\/g, '/').replace(/\/config\/?$/, '').replace(/\/$/, '');
+    setMigrationTargetPreview(`${parent}/vaults/${migrationName || baseName(migrationSource)}`);
+  };
+
+  const confirmMigration = async () => {
+    if (!migrationSource) { setMigrationError(t.chooseFirst); return; }
+    const vault: RecentVaultDto = { path: migrationSource, name: migrationName || baseName(migrationSource), openedAt: new Date().toISOString() };
+    const command = migrationMode === 'portable' ? 'migrate_vaults_to_portable' : 'migrate_vaults_to_installed';
+    try {
+      const migrated = await invoke(command, { vaults: [vault] }) as RecentVaultDto[];
+      setRecentVaults(migrated);
+      await persistRecentVaults(migrated);
+      const dirs = await invoke('app_directories') as AppDirectoriesDto;
+      setAppDirs(dirs);
+      setStatus(migrationMode === 'portable' ? t.migratedToPortable : t.migratedToInstalled);
+      closeMigrationWizard();
+    } catch (e: any) {
+      setMigrationError(String(e?.message ?? e));
+    }
+  };
+
+  const backupCurrentVault = async () => {
+    setBackupRestoreError('');
+    if (!vaultPath) { setBackupRestoreError(t.chooseFirst); return; }
+    const defaultName = `${baseName(vaultPath)}-backup.zip`;
+    const picked = await save({ defaultPath: defaultName, filters: [{ name: 'ZIP', extensions: ['zip'] }] });
+    if (typeof picked !== 'string') return;
+    try {
+      await invoke('backup_vault', { vaultPath, backupPath: picked });
+      setStatus(`${t.backupComplete}: ${short(picked)}`);
+      setBackupRestoreError('');
+    } catch (e: any) {
+      setBackupRestoreError(String(e?.message ?? e));
+    }
+  };
+
+  const restoreFromBackup = async () => {
+    setBackupRestoreError('');
+    const backup = await open({ multiple: false, filters: [{ name: 'ZIP', extensions: ['zip'] }] });
+    if (typeof backup !== 'string') return;
+    const target = await dir();
+    if (!target) return;
+    const restoredDir = `${target}/${baseName(backup).replace(/\.zip$/i, '')}`;
+    try {
+      await invoke('restore_vault', { backupPath: backup, targetPath: restoredDir });
+      await connect(restoredDir);
+      setStatus(`${t.restoreComplete}: ${short(restoredDir)}`);
+      setBackupRestoreError('');
+    } catch (e: any) {
+      setBackupRestoreError(String(e?.message ?? e));
+    }
   };
 
   const performImport = async (request: ImportRequest) => {
@@ -2022,7 +2168,13 @@ export default function App() {
           <div className="actions">
             <button className="secondary" onClick={() => void run(migrateToPortable)} disabled={busy || !appDirs || appDirs.isPortableMode}>{t.migrateToPortable}</button>
             <button className="secondary" onClick={() => void run(migrateToInstalled)} disabled={busy || !appDirs || !appDirs.isPortableMode}>{t.migrateToInstalled}</button>
+            <button className="secondary" onClick={() => { openMigrationWizard(); }} disabled={busy || !appDirs}>{t.migrationWizard}</button>
           </div>
+          <div className="actions" style={{ marginTop: 10 }}>
+            <button className="secondary" onClick={() => void run(backupCurrentVault)} disabled={busy || !hasVault}>{t.backupVault}</button>
+            <button className="secondary" onClick={() => void run(restoreFromBackup)} disabled={busy}>{t.restoreVault}</button>
+          </div>
+          {backupRestoreError && <p className="errorText">{backupRestoreError}</p>}
         </div>
         <div className="card span2">
           <h2>{t.brand}</h2>
@@ -2030,9 +2182,48 @@ export default function App() {
           <p>{lang === 'zh' ? `当前支持来源：${sourceAdapters.map(a => a.name).join('、')}` : `Supported sources: ${sourceAdapters.map(a => a.name).join(', ')}`}</p>
           <p>{vaultSummary?.vault_id ? `${t.vaultId}: ${vaultSummary.vault_id}` : (lang === 'zh' ? '尚未连接库。' : 'No vault connected yet.')}</p>
           <p>{vaultTableCount != null ? `tables: ${vaultTableCount}` : (lang === 'zh' ? '尚无表信息。' : 'No table info yet.')}</p>
+          <p><strong>{t.version}</strong>: {appVersion ?? '—'}</p>
+          {updateCheck && <p>
+            <strong>{t.updateCheck}</strong>:{' '}
+            {updateCheck.hasUpdate
+              ? `${t.updateAvailable} ${updateCheck.latestVersion}`
+              : `${t.upToDate} (${updateCheck.currentVersion})`}
+          </p>}
           <small>{sourceAdapters.map(a => `${a.name}${a.is_default ? ' · 默认' : ''}`).join(' | ')}</small>
         </div>
       </section>}
+
+      {migrationOpen && <div className="modalOverlay" onClick={(e) => { if (e.target === e.currentTarget) closeMigrationWizard(); }}>
+        <div className="modalCard">
+          <div className="cardHead"><h2>{t.migrationWizard}</h2><button className="light" onClick={closeMigrationWizard}>×</button></div>
+          {migrationStep === 1 && <div className="migrationStep">
+            <p>{t.migrationSource}</p>
+            <Path label={t.chooseDir} value={migrationSource} button={t.chooseDir} onPick={() => void run(pickMigrationSource)} disabled={busy} />
+            <div className="actions">
+              <button onClick={() => { if (!migrationSource) { setMigrationError(t.chooseFirst); return; } setMigrationError(''); setMigrationStep(2); }} disabled={!migrationSource}>{t.migrationNext}</button>
+            </div>
+          </div>}
+          {migrationStep === 2 && <div className="migrationStep">
+            <p>{t.migrationMode}</p>
+            <label className="radioLabel"><input type="radio" name="migrationMode" checked={migrationMode === 'portable'} onChange={() => setMigrationMode('portable')} disabled={appDirs?.isPortableMode === true} /> {t.migrationModePortable}</label>
+            <label className="radioLabel"><input type="radio" name="migrationMode" checked={migrationMode === 'installed'} onChange={() => setMigrationMode('installed')} disabled={appDirs?.isPortableMode === false} /> {t.migrationModeInstalled}</label>
+            {appDirs?.isPortableMode === true && <p className="hintText">{t.migrationAlreadyPortable}</p>}
+            {appDirs?.isPortableMode === false && <p className="hintText">{t.migrationAlreadyInstalled}</p>}
+            <div className="actions">
+              <button className="secondary" onClick={() => setMigrationStep(1)}>{t.migrationBack}</button>
+              <button onClick={() => { setMigrationStep(3); void run(computeMigrationTarget); }}>{t.migrationNext}</button>
+            </div>
+          </div>}
+          {migrationStep === 3 && <div className="migrationStep">
+            <p>{t.migrationTarget}: <code>{migrationTargetPreview || '—'}</code></p>
+            <div className="actions">
+              <button className="secondary" onClick={() => setMigrationStep(2)}>{t.migrationBack}</button>
+              <button onClick={() => void run(confirmMigration)} disabled={!migrationTargetPreview}>{t.migrationConfirm}</button>
+            </div>
+          </div>}
+          {migrationError && <p className="errorText">{migrationError}</p>}
+        </div>
+      </div>}
     </main>
   </div>;
 }

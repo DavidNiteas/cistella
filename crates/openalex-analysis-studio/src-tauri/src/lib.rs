@@ -14,9 +14,10 @@ use cistella_core::{
     MetricCode, Note as CoreNote, NoteDraft, OpenAlexSourcesAdapter, ReadingStatus, RecentVault,
     SearchFieldScope, SearchIndexTaskState, SearchIndexTaskStatus, SearchQuery, SourceAdapter,
     SourceRecord, SourceSearchQuery, Vault, VaultOpenOptions, available_source_adapters,
-    export_dataframe, load_recent_vaults,
+    backup_vault as backup_vault_core, export_dataframe, load_recent_vaults,
     migrate_vaults_to_installed as migrate_vaults_to_installed_core,
     migrate_vaults_to_portable as migrate_vaults_to_portable_core, resolve_recent_vault_paths,
+    restore_vault as restore_vault_core,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -1471,6 +1472,26 @@ fn is_portable_mode() -> CommandResult<bool> {
     Ok(current_app_directories()?.is_portable_mode())
 }
 
+fn tauri_conf_path() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tauri.conf.json")
+}
+
+fn update_json_path() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("update.json")
+}
+
+#[tauri::command]
+fn get_app_version() -> CommandResult<String> {
+    cistella_core::read_version_from_tauri_conf(&tauri_conf_path()).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn check_update() -> CommandResult<Value> {
+    let check = cistella_core::check_update(&tauri_conf_path(), &update_json_path())
+        .map_err(|e| e.to_string())?;
+    serde_json::to_value(check).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 fn recent_vaults() -> CommandResult<Vec<RecentVaultDto>> {
     let dirs = current_app_directories()?;
@@ -1506,6 +1527,18 @@ fn migrate_vaults_to_installed(vaults: Vec<RecentVaultDto>) -> CommandResult<Vec
     migrate_vaults_to_installed_core(&dirs, &vaults)
         .map_err(|e| e.to_string())
         .map(|migrated| migrated.into_iter().map(recent_vault_to_dto).collect())
+}
+
+#[tauri::command]
+fn backup_vault(vault_path: String, backup_path: String) -> CommandResult<()> {
+    backup_vault_core(PathBuf::from(vault_path), PathBuf::from(backup_path))
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn restore_vault(backup_path: String, target_path: String) -> CommandResult<()> {
+    restore_vault_core(PathBuf::from(backup_path), PathBuf::from(target_path))
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -2097,10 +2130,14 @@ pub fn run() {
             source_adapters,
             app_directories,
             is_portable_mode,
+            get_app_version,
+            check_update,
             recent_vaults,
             update_recent_vaults,
             migrate_vaults_to_portable,
             migrate_vaults_to_installed,
+            backup_vault,
+            restore_vault,
             search_sources,
             top_sources,
             export_top_sources,

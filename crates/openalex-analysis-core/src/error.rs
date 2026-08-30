@@ -12,6 +12,8 @@ pub enum CoreError {
     Json(#[from] serde_json::Error),
     #[error("XLSX error: {0}")]
     Xlsx(#[from] rust_xlsxwriter::XlsxError),
+    #[error("zip error: {0}")]
+    Zip(#[from] zip::result::ZipError),
     #[error("missing table in manifest: {0}")]
     MissingTable(String),
     #[error("invalid table file path in manifest: {0}")]
@@ -110,4 +112,6 @@ pub enum CoreError {
     AppConfigParseFailed(String),
     #[error("vault migration failed: {0}")]
     MigrationFailed(String),
+    #[error("update check failed: {0}")]
+    UpdateCheckFailed(String),
 }

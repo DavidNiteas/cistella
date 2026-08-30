@@ -1,4 +1,5 @@
 pub mod app_dirs;
+pub mod backup;
 pub mod dataset;
 pub mod error;
 pub mod export;
@@ -9,6 +10,7 @@ pub mod manifest;
 pub mod metrics;
 pub mod notes;
 pub mod query;
+pub mod release;
 pub mod schema;
 pub mod search;
 mod secure_user_records;
@@ -20,6 +22,7 @@ pub use app_dirs::{
     make_vault_paths_portable, migrate_vaults_to_installed, migrate_vaults_to_portable,
     resolve_recent_vault_paths, save_app_config, save_recent_vaults,
 };
+pub use backup::{backup_vault, restore_vault};
 pub use dataset::{Dataset, DatasetOpenOptions};
 pub use error::{CoreError, Result};
 pub use export::{ExportFormat, export_dataframe};
@@ -54,6 +57,10 @@ pub use notes::{
     Note, NoteDraft, QuoteAnchor,
 };
 pub use query::{SourceSearchQuery, SourceSummary};
+pub use release::{
+    UpdateCheck, check_update, is_newer_version, read_latest_version_from_json,
+    read_version_from_tauri_conf,
+};
 pub use schema::TableName;
 pub use search::{
     AssetContentIndexRecord, AssetContentIndexState, CONTENT_ANALYZER_VERSION,
