@@ -27,7 +27,8 @@ pub use dataset::{Dataset, DatasetOpenOptions};
 pub use error::{CoreError, Result};
 pub use export::{ExportFormat, export_dataframe};
 pub use import::remote::{
-    CrossrefResolver, Identifier, RemoteMetadataResolver, RemoteResolverRegistry, ResolveContext,
+    CrossrefResolver, Identifier, PubMedResolver, RemoteMetadataResolver, RemoteResolverRegistry,
+    ResolveContext,
 };
 pub use import::{
     ImportFormat,

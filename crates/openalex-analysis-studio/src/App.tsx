@@ -273,7 +273,7 @@ const zh = {
   literatureKeyword: '关键词筛选',
   addLiterature: '新建条目',
   importByIdentifier: '通过标识符导入',
-  identifierInputPlaceholder: 'DOI / PMID / ISBN / OpenAlex ID',
+  identifierInputPlaceholder: 'DOI / PMID / PMCID / ISBN / OpenAlex ID',
   resolveIdentifier: '解析',
   remoteResolveTitle: '在线解析结果',
   importLiterature: '导入文献',
@@ -498,7 +498,7 @@ const en: Dict = {
   ...zh,
   importLiterature: 'Import literature',
   importByIdentifier: 'Import by identifier',
-  identifierInputPlaceholder: 'DOI / PMID / ISBN / OpenAlex ID',
+  identifierInputPlaceholder: 'DOI / PMID / PMCID / ISBN / OpenAlex ID',
   resolveIdentifier: 'Resolve',
   remoteResolveTitle: 'Remote resolution result',
   importLiteratureTitle: 'Import literature',
@@ -771,6 +771,15 @@ function parseNoteConflict(error: unknown): { noteId: string; message: string } 
   return null;
 }
 function baseName(p: string) { const s = p.replace(/\\/g, '/'); return s.slice(s.lastIndexOf('/') + 1) || p; }
+function detectIdentifierType(raw: string): 'doi' | 'pmid' | 'pmcid' | null {
+  const s = raw.trim().toLowerCase();
+  if (!s) return null;
+  if (s.startsWith('doi:') || s.startsWith('https://doi.org/') || s.startsWith('http://doi.org/') || s.includes('/')) return 'doi';
+  if (s.startsWith('pmid:')) return 'pmid';
+  if (s.startsWith('pmc:') || s.startsWith('pmcid:')) return 'pmcid';
+  if (/^\d+$/.test(s)) return 'pmid';
+  return null;
+}
 function loadRecent(): string[] { try { return JSON.parse(localStorage.getItem('recentVaults') || '[]'); } catch { return []; } }
 function remember(path: string) { const next = [path, ...loadRecent().filter(p => p !== path)].slice(0, 6); localStorage.setItem('recentVaults', JSON.stringify(next)); return next; }
 async function fetchRecentVaults(): Promise<RecentVaultDto[]> { try { return await invoke('recent_vaults') as RecentVaultDto[]; } catch { return []; } }
@@ -2055,7 +2064,13 @@ export default function App() {
             <input placeholder={t.openAlexWorksQuery} value={openAlexQuery} onChange={e => setOpenAlexQuery(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void searchOpenAlexWorks(); }} />
             <button className="secondary" onClick={() => void searchOpenAlexWorks()} disabled={busy || openAlexLoading || !openAlexWorksDir || !openAlexQuery.trim()}>{t.searchOpenAlexWorks}</button>
           </> : <button className="secondary" onClick={inspectLiteratureImport} disabled={busy}>{t.importLiterature}</button>}
-          <input placeholder={t.identifierInputPlaceholder} value={identifierInput} onChange={e => setIdentifierInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void resolveRemoteMetadata(); }} />
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input placeholder={t.identifierInputPlaceholder} value={identifierInput} onChange={e => setIdentifierInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void resolveRemoteMetadata(); }} />
+            {(() => {
+              const type = detectIdentifierType(identifierInput);
+              return type ? <small>{type.toUpperCase()}</small> : null;
+            })()}
+          </span>
           <button className="secondary" onClick={() => void resolveRemoteMetadata()} disabled={busy || remoteResolveLoading || !identifierInput.trim()}>{t.resolveIdentifier}</button>
           <button onClick={beginNewLiterature} disabled={busy}>{t.addLiterature}</button>
         </div>}

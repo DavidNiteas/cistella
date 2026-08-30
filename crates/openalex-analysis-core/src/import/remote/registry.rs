@@ -5,7 +5,7 @@ use reqwest::Client;
 use crate::{CoreError, Result, import::source_record::SourceRecord};
 
 use super::{
-    CrossrefResolver, Identifier, RemoteMetadataResolver, ResolveContext,
+    CrossrefResolver, Identifier, PubMedResolver, RemoteMetadataResolver, ResolveContext,
     identifier::parse_identifier,
 };
 
@@ -21,19 +21,25 @@ pub struct RemoteResolverRegistry {
 }
 
 impl RemoteResolverRegistry {
-    /// Creates a registry with the default Crossref resolver.
+    /// Creates a registry with the default Crossref and PubMed resolvers.
     pub fn new() -> Self {
         Self {
-            resolvers: vec![Box::new(CrossrefResolver::default())],
+            resolvers: vec![
+                Box::new(CrossrefResolver::default()),
+                Box::new(PubMedResolver::default()),
+            ],
             client: Client::new(),
         }
     }
 
     /// Creates a registry with a custom HTTP client (used in tests with a mock
-    /// server).
+    /// server) and the default Crossref and PubMed resolvers.
     pub fn with_client(client: Client) -> Self {
         Self {
-            resolvers: vec![Box::new(CrossrefResolver::default())],
+            resolvers: vec![
+                Box::new(CrossrefResolver::default()),
+                Box::new(PubMedResolver::default()),
+            ],
             client,
         }
     }
@@ -51,6 +57,37 @@ impl RemoteResolverRegistry {
     pub fn with_crossref_base_url_and_client(base_url: impl Into<String>, client: Client) -> Self {
         Self {
             resolvers: vec![Box::new(CrossrefResolver::with_base_url(base_url))],
+            client,
+        }
+    }
+
+    /// Creates a registry with a PubMed resolver pointing at custom PubMed and
+    /// Europe PMC base URLs.
+    pub fn with_pubmed_base_urls(
+        pubmed_url: impl Into<String>,
+        europepmc_url: impl Into<String>,
+    ) -> Self {
+        Self {
+            resolvers: vec![
+                Box::new(CrossrefResolver::default()),
+                Box::new(PubMedResolver::with_base_urls(pubmed_url, europepmc_url)),
+            ],
+            client: Client::new(),
+        }
+    }
+
+    /// Creates a registry with a PubMed resolver pointing at custom PubMed and
+    /// Europe PMC base URLs and a custom HTTP client.
+    pub fn with_pubmed_base_urls_and_client(
+        pubmed_url: impl Into<String>,
+        europepmc_url: impl Into<String>,
+        client: Client,
+    ) -> Self {
+        Self {
+            resolvers: vec![
+                Box::new(CrossrefResolver::default()),
+                Box::new(PubMedResolver::with_base_urls(pubmed_url, europepmc_url)),
+            ],
             client,
         }
     }
