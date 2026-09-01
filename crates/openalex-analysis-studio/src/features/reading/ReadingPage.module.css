@@ -1,0 +1,323 @@
+.readingPage {
+  overflow: auto;
+  padding-bottom: var(--space-8);
+}
+
+.literatureToolbar {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.literatureToolbar input {
+  flex: 1;
+  height: 38px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0 12px;
+}
+
+.literatureToolbar span {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-caption);
+}
+
+.literatureEditor {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.literatureEditor h2,
+.literatureEditor .actions {
+  grid-column: 1/-1;
+}
+
+.literatureEditor textarea {
+  min-height: 72px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  resize: vertical;
+}
+
+.literatureFields {
+  display: contents;
+}
+
+.literatureList {
+  overflow: auto;
+}
+
+.literatureItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+  align-items: flex-start;
+}
+
+.literatureItem:last-child {
+  border-bottom: 0;
+}
+
+.literatureItem h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.literatureItem p {
+  margin: 0 0 6px;
+}
+
+.itemActions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.itemActions select {
+  height: 34px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0 8px;
+  color: var(--color-text-primary);
+}
+
+.literatureItemDetail {
+  min-width: 0;
+  flex: 1;
+}
+
+.literatureFiles {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.literatureFile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 10px;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-md);
+}
+
+.literatureFile strong,
+.literatureFile small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.literatureFile strong {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-primary);
+}
+
+.literatureFile small {
+  margin-top: 4px;
+  font-size: var(--font-size-label);
+  color: var(--color-text-secondary);
+}
+
+.fileActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.fileActions .secondary,
+.itemActions .secondary {
+  padding: 8px 10px;
+}
+
+.editorFiles {
+  grid-column: 1/-1;
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: 14px;
+}
+
+.editorFiles h3 {
+  margin: 0 0 10px;
+  font-size: var(--font-size-caption);
+}
+
+.editorFileActions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+}
+
+.readingSessions {
+  overflow: auto;
+}
+
+.readingSessionList {
+  display: grid;
+  gap: 9px;
+  margin-top: var(--space-3);
+}
+
+.readingSession {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  border-radius: 11px;
+}
+
+.readingSession.unavailable,
+.readingAsset.unavailable {
+  background: var(--color-warning-bg);
+  border-color: var(--color-warning);
+}
+
+.readingSessionMeta {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.readingSessionMeta strong {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-caption);
+}
+
+.readingSessionMeta small {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  overflow-wrap: anywhere;
+}
+
+.sessionWarning {
+  color: var(--color-warning-text) !important;
+}
+
+.readingAssetList {
+  margin-top: 10px;
+}
+
+.readingAsset {
+  align-items: flex-start;
+}
+
+.readingAsset .fileActions button {
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-extrabold);
+  cursor: pointer;
+}
+
+.assetMeta {
+  min-width: 0;
+  flex: 1;
+}
+
+.assetMeta small {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.assetFile select {
+  min-height: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  padding: 0 8px;
+}
+
+.importPreviewList {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.importPreviewItem {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 12px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-elevated);
+}
+
+.importPreviewItem.matched {
+  border-color: var(--color-primary-subtle);
+  background: var(--color-info-bg);
+}
+
+.importPreviewItem strong {
+  display: block;
+  font-size: var(--font-size-body);
+  margin-bottom: 4px;
+}
+
+.importPreviewItem small {
+  display: block;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-caption);
+  margin-bottom: 2px;
+}
+
+.importConflict {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.literatureImportPreview,
+.literatureImportResult {
+  min-width: 0;
+}
+
+.toggle {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 18px 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+}
+
+.toggle input {
+  accent-color: var(--color-primary);
+}
+
+@media (max-width: 1250px) {
+  .literatureFile {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .fileActions {
+    justify-content: flex-start;
+  }
+
+  .readingSession {
+    flex-direction: column;
+  }
+
+  .readingSession .fileActions {
+    justify-content: flex-start;
+  }
+}

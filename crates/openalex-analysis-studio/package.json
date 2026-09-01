@@ -8,22 +8,31 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "build:release": "tauri build && node scripts/make-portable.js"
+    "build:release": "node scripts/build-release.js",
+    "build:bin-test": "node scripts/build-bin-test.js",
+    "test:headless": "node scripts/headless-smoke-test.js"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-dialog": "^2.7.2",
     "echarts": "latest",
     "echarts-for-react": "latest",
+    "lucide-react": "^1.37.0",
     "react": "latest",
     "react-dom": "latest"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@tauri-apps/cli": "^2.11.4",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "4.3.4",
+    "eslint": "^10.9.1",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "typescript": "5.8.3",
+    "typescript-eslint": "^8.68.0",
     "vite": "6.2.4"
   }
 }

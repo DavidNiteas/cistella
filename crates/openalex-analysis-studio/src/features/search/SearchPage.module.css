@@ -1,0 +1,76 @@
+.localSearchControls {
+  align-items: end;
+}
+
+.localSearchControls .searchInput {
+  flex: 1;
+}
+
+.localSearchResults {
+  overflow: auto;
+}
+
+.searchMatch {
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-md);
+}
+
+.searchPagination {
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.searchStatus {
+  text-transform: uppercase;
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-extrabold);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-info-bg);
+  color: var(--color-info-text);
+}
+
+.searchStatus.ready {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+.searchStatus.building {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.searchStatus.failed,
+.searchStatus.degraded {
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+
+.literatureItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+  align-items: flex-start;
+}
+
+.literatureItem:last-child {
+  border-bottom: 0;
+}
+
+.literatureItem h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.literatureItem p {
+  margin: 0 0 6px;
+}
+
+.literatureItemDetail {
+  min-width: 0;
+  flex: 1;
+}

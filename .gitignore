@@ -3,6 +3,7 @@
 /openalex-sources/
 /openalex-sources.zip
 /exports/
+/bin_test/
 /node_modules/
 /package.json
 /pnpm-lock.yaml

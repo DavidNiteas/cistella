@@ -15,7 +15,8 @@
         "title": "cistella",
         "width": 1280,
         "height": 820,
-        "resizable": true
+        "resizable": true,
+        "create": false
       }
     ],
     "security": {
@@ -24,7 +25,12 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["msi", "nsis"],
-    "icon": ["icons/icon.ico"]
+    "targets": [
+      "msi",
+      "nsis"
+    ],
+    "icon": [
+      "icons/icon.ico"
+    ]
   }
 }

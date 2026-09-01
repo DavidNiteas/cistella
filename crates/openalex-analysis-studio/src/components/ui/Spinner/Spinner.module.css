@@ -1,0 +1,29 @@
+.spinner {
+  display: inline-grid;
+  place-items: center;
+}
+
+.spinner > svg {
+  animation: spin 1s linear infinite;
+}
+
+.small > svg {
+  width: 16px;
+  height: 16px;
+}
+
+.medium > svg {
+  width: 24px;
+  height: 24px;
+}
+
+.large > svg {
+  width: 40px;
+  height: 40px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

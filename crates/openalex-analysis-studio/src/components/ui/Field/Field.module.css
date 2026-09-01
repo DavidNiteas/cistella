@@ -1,0 +1,47 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 120px;
+}
+
+.label {
+  font-size: var(--font-size-label);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-extrabold);
+}
+
+.input,
+.select,
+.textarea {
+  min-height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  padding: 0 10px;
+  color: var(--color-text-primary);
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.textarea {
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.hint {
+  font-size: var(--font-size-label);
+  color: var(--color-text-tertiary);
+}
+
+.error {
+  color: var(--color-danger-text);
+  font-size: var(--font-size-label);
+}

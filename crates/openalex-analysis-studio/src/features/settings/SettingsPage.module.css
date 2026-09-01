@@ -1,0 +1,36 @@
+.migrationStep {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.migrationStep .radioLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.migrationStep .radioLabel input {
+  margin: 0;
+}
+
+.errorText {
+  color: var(--color-danger-text);
+  margin: 12px 0 0;
+  font-size: var(--font-size-caption);
+}
+
+.hintText {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-caption);
+  margin: 8px 0 0;
+}
+
+.shortcutList {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+  line-height: 1.8;
+}

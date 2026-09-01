@@ -1,0 +1,20 @@
+.shell {
+  display: flex;
+  height: 100vh;
+  min-width: 0;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.content {
+  flex: 1;
+  overflow: hidden;
+  padding: 0 28px 22px;
+}
