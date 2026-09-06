@@ -1,4 +1,4 @@
-export { useI18n } from './useI18n';
+﻿export { useI18n } from './useI18n';
 export { useTheme } from './useTheme';
 export { useChartTheme } from './useChartTheme';
 export { useVaultConnection } from './useVaultConnection';
@@ -17,5 +17,6 @@ export { useNotes } from './useNotes';
 export type { NotesState } from './useNotes';
 export { useSettings } from './useSettings';
 export type { SettingsState } from './useSettings';
+export { useWorkspaceContract } from './useWorkspaceContract';
 export { useVaultImport } from './useVaultImport';
 export type { VaultImportState } from './useVaultImport';

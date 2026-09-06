@@ -1,4 +1,4 @@
-[package]
+﻿[package]
 name = "cistella-desktop"
 version.workspace = true
 edition.workspace = true
@@ -27,6 +27,7 @@ tauri-build.workspace = true
 [dependencies]
 anyhow.workspace = true
 cistella-core = { path = "../../openalex-analysis-core" }
+cistella-workspace = { path = "../../cistella-workspace" }
 serde.workspace = true
 serde_json.workspace = true
 tauri = { workspace = true, features = [] }
@@ -35,4 +36,3 @@ clap = { version = "4.5.17", features = ["derive"] }
 tauri-plugin-opener = "2.5.4"
 
 uuid.workspace = true
-

@@ -1,5 +1,7 @@
-[workspace]
+﻿[workspace]
 members = [
+  "crates/cistella-tree-space",
+  "crates/cistella-workspace",
   "crates/openalex-analysis-core",
   "crates/openalex-analysis-studio/src-tauri",
 ]
@@ -12,6 +14,7 @@ license = "MIT"
 repository = ""
 
 [workspace.dependencies]
+arrow = { version = "55", features = ["ipc"] }
 anyhow = "1"
 chrono = { version = "0.4", features = ["serde"] }
 dirs = "6"

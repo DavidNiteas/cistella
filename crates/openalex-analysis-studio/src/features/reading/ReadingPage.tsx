@@ -46,7 +46,7 @@ export function ReadingPage({ vault, literature, reading, context, t, lang, onCo
       )}
 
       {vault.hasVault && literature.importResult && (
-        <Card className={`span3 ${styles.literatureImportResult}`}>
+        <Card className={`${styles.literatureImportResult}`}>
           <CardHeader title={t.importResultTitle} />
           <p>
             {lang === 'zh'
@@ -60,7 +60,7 @@ export function ReadingPage({ vault, literature, reading, context, t, lang, onCo
       )}
 
       {vault.hasVault && literature.importError && (
-        <Card className="span3">
+        <Card className="">
           <CardHeader title={t.failed} />
           <ErrorBanner>{literature.importError}</ErrorBanner>
         </Card>
@@ -104,7 +104,7 @@ export function ReadingPage({ vault, literature, reading, context, t, lang, onCo
 
 function ReadingHero({ t, hasVault, vaultSummary, vaultPath, busy, onConnect }: { t: Dict; hasVault: boolean; vaultSummary: import('../../types').VaultSummary | null; vaultPath: string; busy: boolean; onConnect: (path: string) => void }) {
   return (
-    <Card className="span3 hero">
+    <Card>
       <PageHeader
         title={t.readingTitle}
         description={t.readingDesc}
@@ -134,7 +134,7 @@ function SessionList({ t, lang, busy, sessions, items, assets, onContinue, onRes
   onEnd: (session: ReadingSession) => void;
 }) {
   return (
-    <Card className={`span3 ${styles.readingSessions}`}>
+    <Card className={`${styles.readingSessions}`}>
       <CardHeader title={t.recentReading} action={<Button onClick={onContinue} disabled={busy || !sessions.length}>{t.continueReading}</Button>} />
       <p>{t.recentReadingDesc}</p>
       {sessions.length ? (
@@ -183,7 +183,7 @@ function SessionList({ t, lang, busy, sessions, items, assets, onContinue, onRes
 
 function LiteratureToolbar({ t, busy, lang: _lang, vaultPath, literature }: { t: Dict; busy: boolean; lang: 'zh' | 'en'; vaultPath: string; literature: LiteratureState }) {
   return (
-    <Card className={`span3 ${styles.literatureToolbar}`}>
+    <Card className={`${styles.literatureToolbar}`}>
       <Input placeholder={t.literatureKeyword} value={literature.keyword} onChange={(e) => literature.setKeyword(e.target.value)} />
       <span>{literature.items.length} {t.literatureCount}</span>
       <input ref={literature.fileInputRef} type="file" accept=".bib,.ris" style={{ display: 'none' }} onChange={(e) => { const file = e.target.files?.[0]; if (file) void literature.handleFileSelected(file); e.target.value = ''; }} />
@@ -232,7 +232,7 @@ function LiteratureToolbar({ t, busy, lang: _lang, vaultPath, literature }: { t:
 
 function OpenAlexWorksPanel({ t, lang, busy, literature }: { t: Dict; lang: 'zh' | 'en'; busy: boolean; literature: LiteratureState }) {
   return (
-    <Card className="span3">
+    <Card className="">
       <CardHeader title={t.openAlexWorksTitle} />
       {literature.openAlexLoading && <p>{lang === 'zh' ? '搜索中…' : 'Searching…'}</p>}
       {literature.openAlexError && <ErrorBanner>{literature.openAlexError}</ErrorBanner>}
@@ -261,7 +261,7 @@ function OpenAlexWorksPanel({ t, lang, busy, literature }: { t: Dict; lang: 'zh'
 
 function ImportPreviewPanel({ t, busy, preview, onPolicyChange, onCommit, onDismiss }: { t: Dict; busy: boolean; preview: import('../../types').LiteratureImportPreview; onPolicyChange: (recordId: string, policy: 'merge' | 'skip' | 'create') => void; onCommit: () => Promise<void>; onDismiss: () => void }) {
   return (
-    <Card className={`span3 ${styles.literatureImportPreview}`}>
+    <Card className={`${styles.literatureImportPreview}`}>
       <CardHeader title={t.importLiteratureTitle} />
       <p>{t.importLiteratureDesc}</p>
       <p>{t.importPreviewTitle}: {preview.items.length}</p>
@@ -310,7 +310,7 @@ function RemoteResolvePanel({ t, busy, loading, error, preview, strategy, onStra
   onDismiss: () => void;
 }) {
   return (
-    <Card className={`span3 ${styles.literatureImportPreview}`}>
+    <Card className={`${styles.literatureImportPreview}`}>
       <CardHeader title={t.remoteResolveTitle} />
       {loading && <p>{t.busy}</p>}
       {error && <ErrorBanner>{error}</ErrorBanner>}
@@ -354,7 +354,7 @@ function RemoteResolvePanel({ t, busy, loading, error, preview, strategy, onStra
 
 function LiteratureEditor({ t, busy, literature }: { t: Dict; busy: boolean; literature: LiteratureState }) {
   return (
-    <Card className={`span3 ${styles.literatureEditor}`}>
+    <Card className={`${styles.literatureEditor}`}>
       <CardHeader title={literature.editingId ? t.editLiterature : t.addLiterature} />
       <Field label={t.title}>
         <Input value={literature.draft.title} onChange={(e) => literature.updateDraft({ title: e.target.value })} />
@@ -410,7 +410,7 @@ function LiteratureList({ t, busy, items, assets, onToggleFavorite, onEdit, onDe
   onStartReading: (asset: DocumentAsset) => void;
 }) {
   return (
-    <Card className={`span3 ${styles.literatureList}`}>
+    <Card className={`${styles.literatureList}`}>
       <CardHeader title={t.literatureCount} />
       {items.length ? (
         items.map((item) => (

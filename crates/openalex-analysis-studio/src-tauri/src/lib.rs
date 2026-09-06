@@ -117,6 +117,15 @@ fn create_main_window(app: &tauri::App) -> tauri::Result<()> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // bin-test builds must NOT embed the real frontend: the whole point of the
+    // pipeline is frontend/backend decoupling, and a stale embedded copy could
+    // silently mask hot updates. Embed only a tiny stub instead; the real
+    // frontend is served from disk via the cistella-bin-test protocol.
+    #[cfg(feature = "bin-test-frontend")]
+    let context = tauri::generate_context!("tauri.bin-test.conf.json");
+    #[cfg(not(feature = "bin-test-frontend"))]
+    let context = tauri::generate_context!();
+
     let builder = tauri::Builder::default();
     #[cfg(feature = "bin-test-frontend")]
     let builder = builder
@@ -202,12 +211,15 @@ pub fn run() {
             commands::migrate_vaults_to_portable,
             commands::migrate_vaults_to_installed,
             commands::backup_vault,
+            commands::workspace_contract,
+            commands::inspect_legacy_vault,
+            commands::migrate_legacy_vault_to_workspace,
             commands::restore_vault,
             commands::search_sources,
             commands::top_sources,
             commands::export_top_sources,
             commands::export_search_sources
         ])
-        .run(tauri::generate_context!())
+        .run(context)
         .expect("error while running cistella");
 }

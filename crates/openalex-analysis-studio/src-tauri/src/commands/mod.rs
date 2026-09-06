@@ -19,6 +19,7 @@ use cistella_core::{
     migrate_vaults_to_portable as migrate_vaults_to_portable_core, resolve_recent_vault_paths,
     restore_vault as restore_vault_core,
 };
+use cistella_workspace as workspace_facade;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use tauri_plugin_opener::OpenerExt;
@@ -140,6 +141,26 @@ pub(crate) struct RecentVaultDto {
     opened_at: Option<String>,
 }
 
+#[tauri::command]
+pub fn workspace_contract() -> CommandResult<workspace_facade::WorkspaceContract> {
+    Ok(workspace_facade::contract())
+}
+
+#[tauri::command]
+pub fn inspect_legacy_vault(
+    root: String,
+) -> CommandResult<workspace_facade::LegacyVaultCompatibilityReport> {
+    workspace_facade::inspect_legacy_vault(root).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub fn migrate_legacy_vault_to_workspace(
+    source_root: String,
+    target_root: String,
+) -> CommandResult<workspace_facade::LegacyVaultMigrationReceipt> {
+    workspace_facade::migrate_legacy_vault_to_workspace(source_root, target_root)
+        .map_err(|error| error.to_string())
+}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HeadlessDoctorReport {
@@ -349,7 +370,7 @@ fn search_task_owner_for_request(
 
 /// Validates that a mutable request still targets the current connection.
 ///
-/// A delayed A→B or A→B→A request must fail before any Vault is opened or any
+/// A delayed A闂佹剚鍋呮晶?or A闂佹剚鍋呮晶顏堟煃椤愶絽鈪?request must fail before any Vault is opened or any
 /// side effect is started.
 fn validate_vault_request(
     connection: &VaultConnectionState,
@@ -1732,6 +1753,7 @@ mod tests {
         CoreError, SearchIndexState, SearchIndexStatus, SearchIndexTaskState,
         SearchIndexTaskStatus, VaultManifest, VaultSourceProvenance,
     };
+
     use std::{
         collections::BTreeMap,
         fs,

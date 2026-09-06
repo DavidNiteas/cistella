@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { Database, BookOpen, NotebookPen, Search, BarChart3, Settings, FilePlus, Save, FolderOpen } from 'lucide-react';
+import { FilePlus, FolderOpen, Save } from 'lucide-react';
 import { Dialog, Icon } from '../ui';
 import type { Dict } from '../../lib/i18n/dict';
 import type { LiteratureState } from '../../hooks/useLiterature';
 import type { NotesState } from '../../hooks/useNotes';
 import type { RecentVaultDto, Workspace } from '../../types';
+import { getWorkspaceCategoryTitle, getWorkspaceEntryTitle, workspaceNavigationCategories } from '../layout/workspaceNavigation';
 import styles from './CommandPalette.module.css';
 
 export interface CommandPaletteProps {
@@ -20,42 +21,16 @@ export interface CommandPaletteProps {
   t: Dict;
 }
 
-function workspaceLabel(t: Dict, id: Workspace, lang: 'zh' | 'en'): string {
-  switch (id) {
-    case 'vault':
-      return t.vault;
-    case 'reading':
-      return t.reading;
-    case 'notes':
-      return t.notes;
-    case 'search':
-      return lang === 'zh' ? '搜索' : 'Search';
-    case 'source':
-      return t.source;
-    case 'settings':
-      return t.settings;
-  }
-}
-
-const workspaceCommands: { id: Workspace; icon: typeof Database }[] = [
-  { id: 'vault', icon: Database },
-  { id: 'reading', icon: BookOpen },
-  { id: 'notes', icon: NotebookPen },
-  { id: 'search', icon: Search },
-  { id: 'source', icon: BarChart3 },
-  { id: 'settings', icon: Settings },
-];
-
 export function CommandPalette({ open, onClose, workspace, setWorkspace, recentVaults, onConnect, literature, notes, lang, t }: CommandPaletteProps) {
   const listRef = useRef<HTMLDivElement>(null);
-
-  if (!open) return null;
 
   useEffect(() => {
     if (!open) return;
     const first = listRef.current?.querySelector('[data-command="true"]') as HTMLElement | null;
     first?.focus();
   }, [open]);
+
+  if (!open) return null;
 
   const handleWorkspace = (id: Workspace) => {
     setWorkspace(id);
@@ -92,29 +67,46 @@ export function CommandPalette({ open, onClose, workspace, setWorkspace, recentV
         </div>
       }
     >
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>{lang === 'zh' ? '切换工作区' : 'Switch workspace'}</h3>
-        <div ref={listRef} className={styles.list} role="listbox" aria-label={lang === 'zh' ? '工作区命令' : 'Workspace commands'}>
-          {workspaceCommands.map((cmd) => {
-            const label = workspaceLabel(t, cmd.id, lang);
-            return (
-              <button
-                key={cmd.id}
-                data-command="true"
-                className={[styles.item, workspace === cmd.id ? styles.active : ''].filter(Boolean).join(' ')}
-                onClick={() => handleWorkspace(cmd.id)}
-                aria-label={label}
-                role="option"
-                aria-selected={workspace === cmd.id}
-              >
-                <Icon icon={cmd.icon} size={16} />
-                <span>{label}</span>
-                {workspace === cmd.id && <small>{lang === 'zh' ? '当前' : 'current'}</small>}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {workspaceNavigationCategories.map((category) => {
+        const categoryEntries = category.entries.filter((entry) => entry.kind === 'workspace' && entry.workspace);
+        if (categoryEntries.length === 0 && category.id !== 'writing') return null;
+        return (
+          <div key={category.id} className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h3 className={styles.sectionTitle}>{getWorkspaceCategoryTitle(category, lang)}</h3>
+              <span className={styles.sectionMeta}>{category.description[lang]}</span>
+            </div>
+            <div ref={category.id === 'reading' ? listRef : undefined} className={styles.list} role="listbox" aria-label={getWorkspaceCategoryTitle(category, lang)}>
+              {category.entries.map((entry) => {
+                const isActive = entry.workspace ? workspace === entry.workspace : false;
+                const disabled = entry.kind !== 'workspace' || !entry.workspace;
+                return (
+                  <button
+                    key={entry.id}
+                    data-command={category.id === 'reading' ? 'true' : undefined}
+                    className={[styles.item, isActive ? styles.active : '', disabled ? styles.disabled : ''].filter(Boolean).join(' ')}
+                    onClick={disabled ? undefined : () => handleWorkspace(entry.workspace as Workspace)}
+                    aria-label={entry.label[lang]}
+                    role="option"
+                    aria-selected={isActive}
+                    aria-disabled={disabled}
+                    disabled={disabled}
+                    title={entry.description[lang]}
+                  >
+                    <Icon icon={entry.icon} size={16} />
+                    <span className={styles.itemText}>
+                      <span>{getWorkspaceEntryTitle(entry, lang)}</span>
+                      <small>{entry.description[lang]}</small>
+                    </span>
+                    <small className={styles.itemMeta}>{category.label[lang]}</small>
+                    {isActive && <small>{lang === 'zh' ? '??' : 'current'}</small>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
 
       <div className={styles.section}>
         <h3 className={styles.sectionTitle}>{lang === 'zh' ? '操作' : 'Actions'}</h3>
@@ -128,8 +120,11 @@ export function CommandPalette({ open, onClose, workspace, setWorkspace, recentV
             aria-selected={false}
           >
             <Icon icon={FilePlus} size={16} />
-            <span>{t.addLiterature}</span>
-            <small>Ctrl/Cmd+N</small>
+            <span className={styles.itemText}>
+              <span>{t.addLiterature}</span>
+              <small>{lang === 'zh' ? '在阅读工作区中新建条目' : 'Create a new item in Reading'}</small>
+            </span>
+            <small className={styles.itemMeta}>Ctrl/Cmd+N</small>
           </button>
           <button
             data-command="true"
@@ -140,8 +135,11 @@ export function CommandPalette({ open, onClose, workspace, setWorkspace, recentV
             aria-selected={false}
           >
             <Icon icon={Save} size={16} />
-            <span>{lang === 'zh' ? '保存' : 'Save'}</span>
-            <small>Ctrl/Cmd+S</small>
+            <span className={styles.itemText}>
+              <span>{lang === 'zh' ? '保存' : 'Save'}</span>
+              <small>{lang === 'zh' ? '保存当前可编辑内容' : 'Save the current editable content'}</small>
+            </span>
+            <small className={styles.itemMeta}>Ctrl/Cmd+S</small>
           </button>
         </div>
       </div>
@@ -162,7 +160,10 @@ export function CommandPalette({ open, onClose, workspace, setWorkspace, recentV
                 title={r.path}
               >
                 <Icon icon={FolderOpen} size={16} />
-                <span className={styles.truncate}>{r.name || r.path}</span>
+                <span className={styles.itemText}>
+                  <span className={styles.truncate}>{r.name || r.path}</span>
+                  <small>{t.openVault}</small>
+                </span>
               </button>
             ))}
           </div>

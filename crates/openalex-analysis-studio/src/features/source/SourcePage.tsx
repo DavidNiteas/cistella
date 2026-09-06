@@ -35,7 +35,7 @@ export function SourcePage({ vault, source, context, t, lang, onConnect }: Sourc
 
   return (
     <section className="page">
-      <Card className="span3 hero">
+      <Card>
         <PageHeader
           title={t.sourceTitle}
           description={t.sourceDesc}
@@ -54,7 +54,7 @@ export function SourcePage({ vault, source, context, t, lang, onConnect }: Sourc
         )}
       </Card>
 
-      <Card className="span3 compact">
+      <Card className="compact">
         <CardHeader title={t.currentVault} />
         <div className="sourceRow">
           <div className="path">{short(vault.vaultPath)}</div>
@@ -71,7 +71,7 @@ export function SourcePage({ vault, source, context, t, lang, onConnect }: Sourc
       </Card>
 
       {source.analysisError && (
-        <Card className="span3">
+        <Card className="">
           <CardHeader title={t.analysisFailed} />
           <ErrorBanner>{source.analysisError}</ErrorBanner>
           <div className="actions">
@@ -82,7 +82,7 @@ export function SourcePage({ vault, source, context, t, lang, onConnect }: Sourc
         </Card>
       )}
 
-      <div className={`${styles.tabs} span3`}>
+      <div className={`${styles.tabs} `}>
         {tabs.map((k) => (
           <button key={k} className={sourceTab === k ? styles.active : ''} onClick={() => setSourceTab(k)}>
             {t[k]}
@@ -97,14 +97,14 @@ export function SourcePage({ vault, source, context, t, lang, onConnect }: Sourc
       {sourceTab === 'table' && (
         <>
           {!vault.hasVault ? (
-            <Card className="span3">
+            <Card className="">
               <CardHeader title={t.connectForAnalysis} />
               <EmptyState title={t.noData} />
             </Card>
           ) : (
             <>
               <SourceControls t={t} source={source} busy={vault.busy} />
-              <Card className="span3">
+              <Card className="">
                 <CardHeader title={lang === 'zh' ? '当前筛选摘要' : 'Current query summary'} />
                 <p>{source.currentQueryText}</p>
                 {source.queryDirty && <small>{t.queryPending}</small>}
@@ -118,7 +118,7 @@ export function SourcePage({ vault, source, context, t, lang, onConnect }: Sourc
                   </Button>
                 </div>
               </Card>
-              <Card className="span3">
+              <Card className="">
                 <CardHeader title={t.recentQueries} />
                 <div className={styles.recent}>
                   {source.recentQueries.length ? (
@@ -140,7 +140,7 @@ export function SourcePage({ vault, source, context, t, lang, onConnect }: Sourc
 
       {sourceTab === 'visual' && (
         <>
-          <Card className="span3">
+          <Card className="">
             <CardHeader
               title={t.ranking}
               action={<Button variant="secondary" onClick={() => void source.exportRows('top')} disabled={!vault.hasVault || !source.overview || Boolean(source.analysisError) || vault.busy}><Icon icon={Download} size={14} /> {t.exportRank}</Button>}
@@ -149,7 +149,7 @@ export function SourcePage({ vault, source, context, t, lang, onConnect }: Sourc
             <p>{source.currentQueryText}</p>
             {source.queryDirty && <small>{t.queryPending}</small>}
           </Card>
-          <Card className="span3">
+          <Card className="">
             <CardHeader title={t.chartRanking} />
             <ReactECharts
               option={useMemo(() => ({
@@ -176,14 +176,14 @@ export function SourcePage({ vault, source, context, t, lang, onConnect }: Sourc
       )}
 
       {sourceTab === 'metrics' && (
-        <Card className={`span3 ${styles.metricGrid}`}>
+        <Card className={`${styles.metricGrid}`}>
           <CardHeader title={t.metricGuide} />
           {[t.hTip, t.citedTip, t.worksTip, t.i10Tip, t.meanTip].map((x, i) => <p key={i}>{x}</p>)}
         </Card>
       )}
 
       {sourceTab === 'export' && (
-        <Card className="span2">
+        <Card className="">
           <CardHeader title={t.export} />
           <p>{lang === 'zh' ? '导出当前已执行的筛选或排行结果。' : 'Export the currently executed ranking or search result.'}</p>
           <p>{source.currentQueryText}</p>
@@ -219,7 +219,7 @@ function SourceOverview({ t, lang, hasVault, overview, adapters, currentQueryTex
   return (
     <>
       {!hasVault && (
-        <Card className="span3">
+        <Card className="">
           <CardHeader title={t.connectForAnalysis} />
           <EmptyState title={t.noData} />
         </Card>
@@ -227,18 +227,18 @@ function SourceOverview({ t, lang, hasVault, overview, adapters, currentQueryTex
       {hasVault && overview && (
         <Stats t={t} overview={overview} />
       )}
-      <Card className="span2">
+      <Card className="">
         <CardHeader title={t.layout} />
         <p>{t.parquet}</p>
         <p>{t.arrow}</p>
         <p>{t.manifest}</p>
       </Card>
-      <Card className="span2">
+      <Card className="">
         <CardHeader title={lang === 'zh' ? '来源适配器' : 'Source adapters'} />
         <p>{lang === 'zh' ? '当前可用的来源适配器列表。' : 'Available source adapters.'}</p>
         <small>{adapters.map((a) => `${a.name}${a.is_default ? ' · 默认' : ''}`).join(' | ')}</small>
       </Card>
-      <Card className="span2">
+      <Card className="">
         <CardHeader title={lang === 'zh' ? '当前筛选摘要' : 'Current query summary'} />
         <p>{currentQueryText}</p>
         {queryDirty && <small>{t.queryPending}</small>}
@@ -251,7 +251,7 @@ function SourceOverview({ t, lang, hasVault, overview, adapters, currentQueryTex
           </Button>
         </div>
       </Card>
-      <Card className="span2">
+      <Card className="">
         <CardHeader title={t.recentQueries} />
         <div className={styles.recent}>
           {recentQueries.length ? (
@@ -271,7 +271,7 @@ function SourceOverview({ t, lang, hasVault, overview, adapters, currentQueryTex
 
 function SourceControls({ t, source, busy }: { t: Dict; source: SourceAnalysisState; busy: boolean }) {
   return (
-    <Card className="span3 controls">
+    <Card className="controls">
       <Field label={t.type}>
         <Select value={source.sourceType} onChange={(e) => source.setSourceType(e.target.value)} options={[
           { value: 'journal', label: t.journal },
@@ -317,7 +317,7 @@ function SourceTable({ rows, lang, t }: { rows: Row[]; lang: 'zh' | 'en'; t: Dic
 
 function Stats({ t, overview }: { t: Dict; overview: import('../../types').Overview | null }) {
   return (
-    <div className={`${styles.stats} span2`}>
+    <div className={`${styles.stats} `}>
       {[
         [overview?.source_count, t.sources],
         [overview?.journal_count, t.journals],

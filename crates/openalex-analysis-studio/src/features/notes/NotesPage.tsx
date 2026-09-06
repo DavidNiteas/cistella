@@ -17,13 +17,13 @@ export interface NotesPageProps {
 export function NotesPage({ vault, notes, items, t, lang }: NotesPageProps) {
   return (
     <section className="page">
-      <Card className="span3 hero">
+      <Card>
         <PageHeader title={t.notesTitle} description={t.notesDesc} />
         {!vault.hasVault ? <p>{t.noVaultReading}</p> : <p>{vault.vaultPath}</p>}
       </Card>
 
       {vault.hasVault && (
-        <Card className={`span3 ${styles.notesToolbar}`}>
+        <Card className={styles.notesToolbar}>
           <Field label={t.noteItemFilter}>
             <select value={notes.filterItemId} onChange={(e) => { notes.setFilterItemId(e.target.value); notes.setSelectedId(null); }} disabled={notes.loading}>
               <option value="all">{t.allItems}</option>
@@ -39,14 +39,14 @@ export function NotesPage({ vault, notes, items, t, lang }: NotesPageProps) {
       )}
 
       {vault.hasVault && notes.error && (
-        <Card className="span3">
+        <Card>
           <CardHeader title={t.failed} />
           <ErrorBanner>{notes.error}</ErrorBanner>
         </Card>
       )}
 
       {vault.hasVault && notes.conflict && (
-        <Card className="span3">
+        <Card>
           <CardHeader title={t.noteConflict} />
           <p>{t.noteConflictMessage}</p>
           <p>{notes.conflict.message}</p>
@@ -62,23 +62,23 @@ export function NotesPage({ vault, notes, items, t, lang }: NotesPageProps) {
       )}
 
       {vault.hasVault && (
-        <Card className={`span3 ${styles.notesEditor}`}>
-          <Field label={t.noteTitle}>
-            <Input value={notes.editorTitle} onChange={(e) => notes.setEditorTitle(e.target.value)} disabled={notes.saving} />
-          </Field>
-          <Field label={t.noteBody}>
-            <TextArea value={notes.editorBody} onChange={(e) => notes.setEditorBody(e.target.value)} disabled={notes.saving} rows={12} />
-          </Field>
-          <div className="actions">
-            <Button onClick={() => void notes.save()} disabled={notes.saving || !notes.editorTitle.trim()} loading={notes.saving}>
-              {notes.saving ? t.savingNote : t.saveNote}
-            </Button>
-          </div>
-        </Card>
-      )}
+        <div className="page-cols">
+          <Card className={styles.notesEditor}>
+            <Field label={t.noteTitle}>
+              <Input value={notes.editorTitle} onChange={(e) => notes.setEditorTitle(e.target.value)} disabled={notes.saving} />
+            </Field>
+            <Field label={t.noteBody}>
+              <TextArea value={notes.editorBody} onChange={(e) => notes.setEditorBody(e.target.value)} disabled={notes.saving} rows={12} />
+            </Field>
+            <div className="actions">
+              <Button onClick={() => void notes.save()} disabled={notes.saving || !notes.editorTitle.trim()} loading={notes.saving}>
+                {notes.saving ? t.savingNote : t.saveNote}
+              </Button>
+            </div>
+          </Card>
 
-      {vault.hasVault && (
-        <NoteList t={t} lang={lang} notes={notes.items} saving={notes.saving} loading={notes.loading} onSelect={notes.setSelectedId} onArchive={notes.archive} onRestore={notes.restore} />
+          <NoteList t={t} lang={lang} notes={notes.items} saving={notes.saving} loading={notes.loading} onSelect={notes.setSelectedId} onArchive={notes.archive} onRestore={notes.restore} />
+        </div>
       )}
 
       {vault.hasVault && notes.selectedId && (
@@ -99,7 +99,7 @@ function NoteList({ t, lang, notes, saving, loading, onSelect, onArchive, onRest
   onRestore: (note: Note) => Promise<void>;
 }) {
   return (
-    <Card className={`span3 ${styles.notesList}`}>
+    <Card className={styles.notesList}>
       <CardHeader title={t.notes} />
       {loading ? (
         <p>{lang === 'zh' ? '加载中…' : 'Loading…'}</p>
@@ -140,7 +140,7 @@ function AnnotationPanel({ t, lang, annotations, loading, error, onOpenAsset, sa
   saving: boolean;
 }) {
   return (
-    <Card className={`span3 ${styles.annotationsPanel}`}>
+    <Card className={styles.annotationsPanel}>
       <CardHeader title={t.annotations} />
       {loading ? (
         <p>{lang === 'zh' ? '加载中…' : 'Loading…'}</p>

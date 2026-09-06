@@ -4,6 +4,7 @@
 /openalex-sources.zip
 /exports/
 /bin_test/
+/release/
 /node_modules/
 /package.json
 /pnpm-lock.yaml

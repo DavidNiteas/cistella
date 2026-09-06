@@ -51,17 +51,6 @@
   margin-left: 0;
 }
 
-.label {
-  opacity: 1;
-  transition: opacity 180ms ease;
-}
-
-.sidebar.collapsed .label {
-  opacity: 0;
-  width: 0;
-  overflow: hidden;
-}
-
 .logo {
   width: 42px;
   height: 42px;
@@ -104,15 +93,26 @@
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--space-3);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
-.navButton {
+.category {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.categoryButton {
   border: 0;
   background: transparent;
   color: #b6bad2;
   text-align: left;
-  padding: 13px 14px;
+  padding: 12px 12px;
   border-radius: var(--radius-lg);
   font-weight: var(--font-weight-extrabold);
   cursor: pointer;
@@ -123,25 +123,109 @@
   font-size: var(--font-size-body);
 }
 
-.navButton:hover {
+.categoryButton:hover {
   background: var(--color-sidebar-hover);
   color: var(--color-text-inverse);
 }
 
-.navButton.active {
+.categoryForcedOpen .categoryButton {
+  cursor: default;
+}
+
+.categoryButton svg {
+  color: #8e93af;
+  flex-shrink: 0;
+}
+
+.categoryButton:hover svg,
+.categoryOpen .categoryButton svg {
+  color: currentColor;
+}
+
+.categoryLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  margin-left: auto;
+  color: #8e93af;
+  flex-shrink: 0;
+}
+
+.entries {
+  display: grid;
+  gap: 3px;
+  padding-left: 12px;
+}
+
+.entryButton {
+  border: 0;
+  background: transparent;
+  color: #b6bad2;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  width: 100%;
+  font-size: var(--font-size-body);
+  min-width: 0;
+}
+
+.entryButton:hover,
+.entryButton:focus-visible {
+  background: var(--color-sidebar-hover);
+  color: var(--color-text-inverse);
+  outline: none;
+}
+
+.entryButton svg {
+  color: #8e93af;
+  flex-shrink: 0;
+}
+
+.entryButton:hover svg,
+.entryActive svg {
+  color: currentColor;
+}
+
+.entryActive {
   background: var(--color-primary);
   color: var(--color-text-inverse);
   box-shadow: var(--shadow-nav-active);
 }
 
-.navButton svg {
-  color: #8e93af;
-  flex-shrink: 0;
+.entryLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.navButton.active svg,
-.navButton:hover svg {
-  color: currentColor;
+.entryDisabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.sidebar.collapsed .categoryButton,
+.sidebar.collapsed .entryButton {
+  justify-content: center;
+  padding-inline: 8px;
+}
+
+.sidebar.collapsed .entryButton {
+  padding-block: 11px;
+}
+
+.sidebar.collapsed .entries {
+  padding-left: 0;
 }
 
 .bottom {

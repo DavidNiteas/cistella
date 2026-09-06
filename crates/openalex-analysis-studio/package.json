@@ -10,7 +10,8 @@
     "tauri": "tauri",
     "build:release": "node scripts/build-release.js",
     "build:bin-test": "node scripts/build-bin-test.js",
-    "test:headless": "node scripts/headless-smoke-test.js"
+    "test:headless": "node scripts/headless-smoke-test.js",
+    "package": "node scripts/package-release.js"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",

@@ -36,7 +36,10 @@
 }
 
 .assetFile {
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: start;
 }
 
 .assetMeta {
@@ -47,6 +50,31 @@
 .assetMeta small {
   overflow-wrap: anywhere;
   white-space: normal;
+}
+
+.fileActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.previewLine {
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-caption);
+}
+
+.helpDetails {
+  margin-top: var(--space-3);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-caption);
+}
+
+.helpDetails summary {
+  cursor: pointer;
+  user-select: none;
 }
 
 .assetFile select {
@@ -104,5 +132,20 @@
   .vaultAssetGroup > .cardHead {
     flex-direction: column;
     gap: 10px;
+    align-items: stretch;
+  }
+
+  .vaultAssetGroup > .cardHead .fileActions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 900px) {
+  .assetFile {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .assetFile .fileActions {
+    justify-content: flex-start;
   }
 }

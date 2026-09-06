@@ -15,7 +15,7 @@ export interface SearchPageProps {
 export function SearchPage({ vault, search, items, t, lang }: SearchPageProps) {
   return (
     <section className="page">
-      <Card className="span3 hero">
+      <Card>
         <PageHeader
           title={t.search}
           description={lang === 'zh' ? '检索当前库的标题、作者、标签和已建立索引的 PDF 正文。结果只返回文献和资产身份。' : 'Search titles, authors, tags, and indexed PDF text in the current Vault. Results contain identities only.'}
@@ -25,7 +25,7 @@ export function SearchPage({ vault, search, items, t, lang }: SearchPageProps) {
 
       {vault.hasVault && (
         <>
-          <div className={`card span3 controls ${styles.localSearchControls}`}>
+          <div className={`card controls ${styles.localSearchControls}`}>
             <div className={styles.searchInput} style={{ flex: 1 }}>
               <Field label={lang === 'zh' ? '查询' : 'Query'}>
                 <Input value={search.text} onChange={(e) => search.setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void search.runSearch(); }} placeholder={lang === 'zh' ? '输入关键词，回车搜索' : 'Enter keywords and press Enter'} />
@@ -45,7 +45,7 @@ export function SearchPage({ vault, search, items, t, lang }: SearchPageProps) {
             </Button>
           </div>
 
-          <Card className="span3 compact">
+          <Card className="compact">
             <CardHeader
               title={lang === 'zh' ? '索引健康' : 'Index health'}
               action={<span className={`${styles.searchStatus} ${search.indexState?.status ? (styles as Record<string, string>)[search.indexState.status] ?? '' : ''}`}>{search.indexState?.status ?? 'missing'}</span>}
@@ -69,14 +69,14 @@ export function SearchPage({ vault, search, items, t, lang }: SearchPageProps) {
           </Card>
 
           {search.error && (
-            <Card className="span3">
+            <Card className="">
               <CardHeader title={lang === 'zh' ? '搜索错误' : 'Search error'} />
               <ErrorBanner>{search.error}</ErrorBanner>
             </Card>
           )}
 
           {search.outcome?.outcome === 'unavailable' && (
-            <Card className="span3">
+            <Card className="">
               <CardHeader title={lang === 'zh' ? '索引不可用' : 'Index unavailable'} />
               <p>{search.outcome.indexState.status}{search.outcome.indexState.detail ? ` · ${search.outcome.indexState.detail}` : ''}</p>
               <p>{lang === 'zh' ? '这不是“无命中”。请显式同步或重建索引。' : 'This is not an empty result. Explicitly sync or rebuild the index.'}</p>
@@ -84,7 +84,7 @@ export function SearchPage({ vault, search, items, t, lang }: SearchPageProps) {
           )}
 
           {search.outcome?.outcome === 'ready' && (
-            <Card className={`span3 ${styles.localSearchResults}`}>
+            <Card className={`${styles.localSearchResults}`}>
               <CardHeader
                 title={lang === 'zh' ? `结果 ${search.outcome.page.totalHits}` : `${search.outcome.page.totalHits} results`}
                 action={<span>{lang === 'zh' ? '每页 50；元数据优先，item_id 稳定排序' : '50/page; metadata first, stable item_id order'}</span>}
@@ -135,7 +135,7 @@ export function SearchPage({ vault, search, items, t, lang }: SearchPageProps) {
           )}
 
           {search.issues?.outcome === 'ready' && (
-            <Card className="span3">
+            <Card className="">
               <CardHeader title={lang === 'zh' ? '资产级索引问题' : 'Asset index issues'} action={<span>{search.issues.issues.length}</span>} />
               {search.issues.issues.length ? (
                 search.issues.issues.map((issue) => (
@@ -148,7 +148,7 @@ export function SearchPage({ vault, search, items, t, lang }: SearchPageProps) {
           )}
 
           {search.issues?.outcome === 'unavailable' && (
-            <Card className="span3">
+            <Card className="">
               <p>{lang === 'zh' ? '索引不可用，暂不能读取问题列表。' : 'The index is unavailable, so issues cannot be read yet.'}</p>
             </Card>
           )}

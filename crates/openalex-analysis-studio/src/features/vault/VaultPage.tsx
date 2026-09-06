@@ -34,6 +34,29 @@ export function VaultPage({ vault, context, importState, literatureItems, t, lan
     <section className="page">
       <VaultHero t={t} busy={vault.busy} onChooseVault={async () => { const v = await dir(); if (v) vault.setVaultPath(v); }} onChooseSource={async () => { const v = await dir(); if (v) await inspectSources(v); }} onImport={() => void importVault()} importEnabled={Boolean(vault.vaultPath && rawDir && importPreview)} />
 
+      <div className="page-cols">
+        <VaultInfo t={t} vaultPath={vault.vaultPath} vaultSummary={context.summary} appDirs={vault.appDirs} busy={vault.busy} onConnect={() => onConnect(vault.vaultPath)} />
+        <RecentVaultsPanel t={t} recentVaults={vault.recentVaults} busy={vault.busy} onConnect={onConnect} />
+      </div>
+
+      <ImportSection
+        t={t}
+        lang={lang}
+        busy={vault.busy}
+        rawDir={rawDir}
+        onPickRawDir={async () => { const v = await dir(); if (v) setRawDir(v); }}
+        vaultPath={vault.vaultPath}
+        onPickOutput={async () => { const v = await dir(); if (v) vault.setVaultPath(v); }}
+        importPreview={importPreview}
+        importError={importError}
+        lastImport={lastImport}
+        buildArrow={buildArrow}
+        onBuildArrowChange={(e) => setBuildArrow(e.target.checked)}
+        onInspect={() => void inspectSources(rawDir)}
+        onImport={() => void importVault()}
+        onRetry={() => void retryImport()}
+      />
+
       {vault.hasVault && (
         <AssetCenterPanel
           t={t}
@@ -49,67 +72,6 @@ export function VaultPage({ vault, context, importState, literatureItems, t, lan
           onRemove={requestRemoveAsset}
         />
       )}
-
-      <VaultInfo t={t} vaultPath={vault.vaultPath} vaultSummary={context.summary} appDirs={vault.appDirs} busy={vault.busy} onConnect={() => onConnect(vault.vaultPath)} />
-
-      <RecentVaultsPanel t={t} recentVaults={vault.recentVaults} busy={vault.busy} onConnect={onConnect} />
-
-      <Card className="span2">
-        <CardHeader title={t.layout} />
-        <p>{t.parquet}</p>
-        <p>{t.arrow}</p>
-        <p>{t.manifest}</p>
-      </Card>
-
-      <Card className="span2">
-        <CardHeader title={t.buildVault} />
-        <PathField label={t.raw} value={rawDir} button={t.chooseDir} onPick={async () => { const v = await dir(); if (v) setRawDir(v); }} disabled={vault.busy} />
-        <PathField label={t.output} value={vault.vaultPath} button={t.chooseVault} onPick={async () => { const v = await dir(); if (v) vault.setVaultPath(v); }} disabled={vault.busy} />
-        <div className="actions">
-          <Button variant="secondary" onClick={() => void inspectSources(rawDir)} disabled={vault.busy || !rawDir}>
-            {t.inspectSources}
-          </Button>
-          <Button onClick={() => void importVault()} disabled={vault.busy || !vault.vaultPath || !rawDir || !importPreview}>
-            <Icon icon={Upload} size={14} /> {t.importFromOpenAlex}
-          </Button>
-        </div>
-        <Checkbox label={t.buildCache} checked={buildArrow} onChange={(e) => setBuildArrow(e.target.checked)} />
-      </Card>
-
-      <Card className="span2">
-        <CardHeader title={t.importPreview} />
-        {importPreview ? (
-          <>
-            <p>{lang === 'zh' ? `分区数 ${importPreview.partitionCount ?? 0}` : `${importPreview.partitionCount ?? 0} partitions`}</p>
-            <p>{lang === 'zh' ? `清单 ${importPreview.hasManifest ? '存在' : '缺失'}` : `Manifest ${importPreview.hasManifest ? 'present' : 'missing'}`}</p>
-            <p>{lang === 'zh' ? `快照 ${importPreview.snapshotDate ?? '未知'}` : `Snapshot ${importPreview.snapshotDate ?? 'unknown'}`}</p>
-          </>
-        ) : (
-          <p>{lang === 'zh' ? '请选择来源目录并执行预检。' : 'Choose a source folder and run inspection.'}</p>
-        )}
-      </Card>
-
-      {importError && (
-        <Card className="span2">
-          <CardHeader title={t.importFailed} />
-          <ErrorBanner>{importError}</ErrorBanner>
-          <div className="actions">
-            <Button variant="secondary" onClick={retryImport} disabled={vault.busy || !lastImport}>
-              {t.retryImport}
-            </Button>
-          </div>
-        </Card>
-      )}
-
-      <Card className="span3">
-        <CardHeader title={t.workflow} />
-        <ul>
-          <li>{t.rawTip}</li>
-          <li>{t.outTip}</li>
-          <li>{t.parquet}</li>
-          <li>{t.arrow}</li>
-        </ul>
-      </Card>
 
       <ConfirmDialog
         open={removeTarget != null}
@@ -129,7 +91,7 @@ export function VaultPage({ vault, context, importState, literatureItems, t, lan
 
 function VaultHero({ t, busy, onChooseVault, onChooseSource, onImport, importEnabled }: { t: Dict; busy: boolean; onChooseVault: () => void; onChooseSource: () => void; onImport: () => void; importEnabled: boolean }) {
   return (
-    <Card className="span3 hero">
+    <Card>
       <PageHeader
         title={t.vaultTitle}
         description={t.vaultDesc}
@@ -153,7 +115,7 @@ function VaultHero({ t, busy, onChooseVault, onChooseSource, onImport, importEna
 
 function VaultInfo({ t, vaultPath, vaultSummary, appDirs, busy, onConnect }: { t: Dict; vaultPath: string; vaultSummary: import('../../types').VaultSummary | null; appDirs: import('../../types').AppDirectoriesDto | null; busy: boolean; onConnect: () => void }) {
   return (
-    <Card className="span2 compact">
+    <Card>
       <CardHeader title={t.currentVault} />
       <div className="sourceRow">
         <div className="path">{short(vaultPath)}</div>
@@ -169,7 +131,7 @@ function VaultInfo({ t, vaultPath, vaultSummary, appDirs, busy, onConnect }: { t
 
 function RecentVaultsPanel({ t, recentVaults, busy, onConnect }: { t: Dict; recentVaults: import('../../types').RecentVaultDto[]; busy: boolean; onConnect: (path: string) => void }) {
   return (
-    <Card className="span2 compact">
+    <Card>
       <CardHeader title={t.recentVaults} />
       <div className={styles.recent}>
         {recentVaults.length ? (
@@ -182,6 +144,67 @@ function RecentVaultsPanel({ t, recentVaults, busy, onConnect }: { t: Dict; rece
           <small>{t.noData}</small>
         )}
       </div>
+    </Card>
+  );
+}
+
+function ImportSection({ t, lang, busy, rawDir, onPickRawDir, vaultPath, onPickOutput, importPreview, importError, lastImport, buildArrow, onBuildArrowChange, onInspect, onImport, onRetry }: {
+  t: Dict;
+  lang: 'zh' | 'en';
+  busy: boolean;
+  rawDir: string;
+  onPickRawDir: () => void;
+  vaultPath: string;
+  onPickOutput: () => void;
+  importPreview: VaultImportState['importPreview'];
+  importError: string | null;
+  lastImport: VaultImportState['lastImport'];
+  buildArrow: boolean;
+  onBuildArrowChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onInspect: () => void;
+  onImport: () => void;
+  onRetry: () => void;
+}) {
+  const previewText = importPreview
+    ? (lang === 'zh'
+      ? `分区数 ${importPreview.partitionCount ?? 0} · 清单 ${importPreview.hasManifest ? '存在' : '缺失'} · 快照 ${importPreview.snapshotDate ?? '未知'}`
+      : `${importPreview.partitionCount ?? 0} partitions · manifest ${importPreview.hasManifest ? 'present' : 'missing'} · snapshot ${importPreview.snapshotDate ?? 'unknown'}`)
+    : (lang === 'zh' ? '请选择来源目录并执行预检。' : 'Choose a source folder and run inspection.');
+  return (
+    <Card>
+      <CardHeader title={t.buildVault} />
+      <PathField label={t.raw} value={rawDir} button={t.chooseDir} onPick={onPickRawDir} disabled={busy} />
+      <PathField label={t.output} value={vaultPath} button={t.chooseVault} onPick={onPickOutput} disabled={busy} />
+      <div className="actions">
+        <Button variant="secondary" onClick={onInspect} disabled={busy || !rawDir}>
+          {t.inspectSources}
+        </Button>
+        <Button onClick={onImport} disabled={busy || !vaultPath || !rawDir || !importPreview}>
+          <Icon icon={Upload} size={14} /> {t.importFromOpenAlex}
+        </Button>
+      </div>
+      <Checkbox label={t.buildCache} checked={buildArrow} onChange={onBuildArrowChange} />
+      <p className={styles.previewLine}>{previewText}</p>
+      {importError && (
+        <>
+          <ErrorBanner>{importError}</ErrorBanner>
+          <div className="actions">
+            <Button variant="secondary" onClick={onRetry} disabled={busy || !lastImport}>
+              {t.retryImport}
+            </Button>
+          </div>
+        </>
+      )}
+      <details className={styles.helpDetails}>
+        <summary>{lang === 'zh' ? '数据布局与工作流说明' : 'Data layout and workflow'}</summary>
+        <ul>
+          <li>{t.rawTip}</li>
+          <li>{t.outTip}</li>
+          <li>{t.parquet}</li>
+          <li>{t.arrow}</li>
+          <li>{t.manifest}</li>
+        </ul>
+      </details>
     </Card>
   );
 }
@@ -201,7 +224,7 @@ function AssetCenterPanel({ t, busy, assets, items, onImportAsset, onLinkExterna
 }) {
   const assetsForItem = (itemId: string) => assets.filter((asset) => asset.itemId === itemId);
   return (
-    <Card className={`span3 ${styles.assetCenter}`}>
+    <Card className={styles.assetCenter}>
       <CardHeader title={t.assetCenter} action={<span>{assets.length} PDF</span>} />
       <p>{t.assetsInVault}</p>
       {items.length ? (
@@ -251,9 +274,9 @@ function AssetList({ assets, t, busy, onOpen, onSetKind, onSetDefault, onMigrate
             <small>
               {t.assetStorage}: {asset.storageKind === 'vault' ? t.vaultFile : t.externalFile}
               {asset.isDefault ? ` · ${t.defaultFile}` : ''}
-            </small>
-            <small>
-              {t.assetKind}: {t.assetKinds[asset.assetKind]} · {t.assetHealth}: {t.assetStatuses[asset.status]} · {t.assetSize}: {formatFileSize(asset.fileSize)}
+              {' · '}{t.assetKind}: {t.assetKinds[asset.assetKind]}
+              {' · '}{t.assetHealth}: {t.assetStatuses[asset.status]}
+              {' · '}{t.assetSize}: {formatFileSize(asset.fileSize)}
             </small>
             <small>
               {t.assetHash}: {asset.contentHash ? `${asset.contentHash.slice(0, 12)}…` : '—'} · {t.assetPath}: {short(asset.path)}

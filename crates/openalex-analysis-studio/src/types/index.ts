@@ -1,6 +1,18 @@
-export type Row = Record<string, unknown>;
+﻿export type Row = Record<string, unknown>;
 export type Adapter = { name: string; kind: string; is_default: boolean };
 export type Workspace = 'vault' | 'reading' | 'search' | 'source' | 'settings' | 'notes';
+export type WorkspaceKind = 'literature' | 'references' | 'writing' | 'assets' | 'analysis' | 'imports' | 'system' | 'cache';
+export type WorkspaceStatus = 'ready' | 'degraded' | 'read_only' | 'failed' | 'closed';
+export type WorkspaceMode = 'read_write' | 'read_only';
+export type WorkspaceContract = {
+  schemaVersion: string;
+  manifestFile: string;
+  defaultMode: WorkspaceMode;
+  defaultStatus: WorkspaceStatus;
+  standardKinds: WorkspaceKind[];
+  registeredBlocks: string[];
+};
+
 export type SourceTab = 'overview' | 'table' | 'visual' | 'metrics' | 'export';
 export type Lang = 'zh' | 'en';
 export type MigrationMode = 'portable' | 'installed';

@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Shell, Sidebar, StatusBar } from './components/layout';
 import { VaultPage, ReadingPage, SearchPage, SourcePage, NotesPage, SettingsPage } from './features';
-import { useI18n, useVaultConnection, useVaultContext, useVaultImport, useLiterature, useReadingSessions, useSourceAnalysis, useLocalSearch, useNotes, useSettings } from './hooks';
+import { useI18n, useVaultConnection, useVaultContext, useVaultImport, useLiterature, useReadingSessions, useSourceAnalysis, useLocalSearch, useNotes, useSettings, useWorkspaceContract } from './hooks';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { CommandPalette } from './components/CommandPalette/CommandPalette';
 import { loadWorkspace } from './lib/utils';
@@ -28,6 +28,7 @@ export default function App() {
   }, []);
   const notes = useNotes(vault, literature.items, t, lang);
   const settings = useSettings(vault, source.adapters, t);
+  const { workspaceContract } = useWorkspaceContract();
 
   useEffect(() => {
     localStorage.setItem('workspace', workspace);
@@ -72,14 +73,8 @@ export default function App() {
   }, [activeWorkspace, vault.hasVault, vault.restored, vault.vaultPath]);
 
   const sidebarLabels = {
-    vault: t.vault,
-    reading: t.reading,
-    notes: t.notes,
-    search: t.search,
-    source: t.source,
-    settings: t.settings,
     sub: t.sub,
-    workspaceSection: lang === 'zh' ? '工作区' : 'Workspace',
+    navigationSection: lang === 'zh' ? '导航' : 'Navigation',
     version: t.version,
   };
 
@@ -99,7 +94,7 @@ export default function App() {
       setSelectedId: notes.setSelectedId,
       save: notes.save,
     },
-    newItemHint: lang === 'zh' ? '请先切换到 Reading 工作区再新建条目。' : 'Switch to the Reading workspace to create a new item.',
+    newItemHint: lang === 'zh' ? '请先切换到阅读工作区再新建条目。' : 'Switch to the Reading workspace to create a new item.',
     saveHint: lang === 'zh' ? '当前工作区没有可保存的编辑器。' : 'There is nothing to save in the current workspace.',
   });
 
@@ -127,6 +122,8 @@ export default function App() {
             version={vault.appVersion}
             collapsed={sidebarCollapsed}
             onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
+            lang={lang}
+            workspaceContract={workspaceContract}
           />
         }
         statusBar={<StatusBar vaultPath={vault.vaultPath} status={vault.status} busy={vault.busy} error={Boolean(vault.vaultError || source.analysisError)} />}

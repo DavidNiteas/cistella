@@ -8,20 +8,30 @@
 
 .page {
   height: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1fr 285px;
-  grid-auto-rows: minmax(90px, auto);
+  display: flex;
+  flex-direction: column;
   gap: 14px;
-  overflow: hidden;
+  overflow-y: auto;
   min-width: 0;
+  padding-right: 2px;
 }
 
-.span2 {
-  grid-column: span 2;
+/* Side-by-side grouping for sections that genuinely benefit from columns
+   (e.g. notes list + editor, settings cards). Collapses to a single column
+   on narrow screens. */
+.page-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+  align-items: start;
 }
 
 .span3 {
-  grid-column: span 3;
+  width: 100%;
+}
+
+.span2 {
+  width: 100%;
 }
 
 .card {
@@ -94,39 +104,14 @@ button:disabled {
   cursor: not-allowed;
 }
 
-@media (max-width: 1250px) {
-  .page {
-    grid-template-columns: 1fr 1fr 250px;
-  }
-}
-
-@media (max-width: 1280px) {
-  .page {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .span2,
-  .span3 {
-    grid-column: span 2;
-  }
-}
-
-@media (max-width: 1024px) {
-  .page {
-    grid-template-columns: 1fr;
-    height: auto;
-    overflow: auto;
-  }
-
-  .span2,
-  .span3 {
-    grid-column: span 1;
-  }
-}
-
 @media (max-width: 800px) {
-  .page {
+  .page,
+  .page-cols {
     gap: 10px;
+  }
+
+  .page-cols {
+    grid-template-columns: 1fr;
   }
 
   .controls {

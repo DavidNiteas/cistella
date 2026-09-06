@@ -7,9 +7,11 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const workspaceRoot = resolve(__dirname, '../../..');
+// Run against the self-contained bin_test bundle instead of target/ so the
+// smoke test does not depend on a debug build of the workspace.
 const exe = process.platform === 'win32'
-  ? join(workspaceRoot, 'target', 'debug', 'cistella-headless.exe')
-  : join(workspaceRoot, 'target', 'debug', 'cistella-headless');
+  ? join(workspaceRoot, 'bin_test', 'cistella-headless.exe')
+  : join(workspaceRoot, 'bin_test', 'cistella-headless');
 const tmpVault = join(workspaceRoot, 'target', 'headless-smoke-vault');
 
 function run(args, options = {}) {
@@ -30,7 +32,7 @@ function json(args) {
 
 if (!existsSync(exe)) {
   console.error(`Missing headless binary: ${exe}`);
-  console.error('Run `cargo build --bin cistella-headless` first.');
+  console.error('Run `pnpm build:bin-test` first.');
   process.exit(1);
 }
 

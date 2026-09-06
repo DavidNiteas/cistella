@@ -20,7 +20,8 @@ export function SettingsPage({ vault, settings, adapters, t, lang, onLangChange 
 
   return (
     <section className="page">
-      <Card className="span2">
+      <div className="page-cols">
+      <Card>
         <CardHeader title={t.language} />
         <Button variant={lang === 'zh' ? 'primary' : 'secondary'} onClick={() => onLangChange('zh')}>
           {t.chinese}
@@ -30,7 +31,7 @@ export function SettingsPage({ vault, settings, adapters, t, lang, onLangChange 
         </Button>
       </Card>
 
-      <Card className="span2">
+      <Card>
         <CardHeader title={t.theme} />
         <Field label={t.theme}>
           <Select
@@ -45,7 +46,7 @@ export function SettingsPage({ vault, settings, adapters, t, lang, onLangChange 
         </Field>
       </Card>
 
-      <Card className="span2">
+      <Card>
         <CardHeader title={t.keyboardShortcuts} />
         <ul className={styles.shortcutList}>
           <li>{t.shortcutSwitchWorkspace}</li>
@@ -56,7 +57,7 @@ export function SettingsPage({ vault, settings, adapters, t, lang, onLangChange 
         </ul>
       </Card>
 
-      <Card className="span2">
+      <Card>
         <CardHeader title={t.runMode} />
         <p><strong>{vault.appDirs ? (vault.appDirs.isPortableMode ? t.portableMode : t.installedMode) : '—'}</strong></p>
         {vault.appDirs && (
@@ -87,7 +88,7 @@ export function SettingsPage({ vault, settings, adapters, t, lang, onLangChange 
         {settings.backupRestoreError && <ErrorBanner>{settings.backupRestoreError}</ErrorBanner>}
       </Card>
 
-      <Card className="span2">
+      <Card>
         <CardHeader title={t.brand} />
         <p>{lang === 'zh' ? '桌面优先、免安装、库即一切。' : 'Desktop-first, portable, vault-first.'}</p>
         <p>{lang === 'zh' ? `当前支持来源：${adapters.map((a) => a.name).join('、')}` : `Supported sources: ${adapters.map((a) => a.name).join(', ')}`}</p>
@@ -104,6 +105,7 @@ export function SettingsPage({ vault, settings, adapters, t, lang, onLangChange 
         )}
         <small>{adapters.map((a) => `${a.name}${a.is_default ? ' · 默认' : ''}`).join(' | ')}</small>
       </Card>
+      </div>
 
       {settings.migrationOpen && <MigrationWizardDialog t={t} lang={lang} vault={vault} settings={settings} />}
 
