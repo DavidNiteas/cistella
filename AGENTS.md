@@ -76,3 +76,11 @@ cargo test -p cistella-desktop --lib
 
 - `bin_test/`、`release/`、`target/` 均 git 忽略；只有 scripts 进版本库。
 - 根 `package.json` 被 git 忽略（历史约定），脚本入口统一挂在 `crates/openalex-analysis-studio/package.json`。
+
+
+## tree-space 依赖自有化
+
+- tree-space 的当前运行时依赖已纳入 crates/tree-space/，包含 	ree-space、	ree-space-derive 和 perfkit 三个 crate。
+- cistella 的 Cargo 依赖必须使用仓库内相对路径，不得恢复为仓库外的 ../../../tree-space/... 路径。
+- 当前未使用的 	able-index、	ree-space-index、	ree-space-polars 不属于本项目构建输入，除非后续明确接入，否则不要复制或加入 workspace。
+- 修改 tree-space vendored 源码时，应在 THIRD_PARTY.md 或相关提交说明中保留来源与变更依据。

@@ -90,9 +90,9 @@ export function SettingsPage({ vault, settings, adapters, t, lang, onLangChange 
 
       <Card>
         <CardHeader title={t.brand} />
-        <p>{lang === 'zh' ? '桌面优先、免安装、库即一切。' : 'Desktop-first, portable, vault-first.'}</p>
+        <p>{lang === 'zh' ? '桌面优先、免安装、库即一切。' : 'Desktop-first, portable, library-first.'}</p>
         <p>{lang === 'zh' ? `当前支持来源：${adapters.map((a) => a.name).join('、')}` : `Supported sources: ${adapters.map((a) => a.name).join(', ')}`}</p>
-        <p>{vault.vaultPath ? `${t.vaultId}: ${vault.vaultPath}` : (lang === 'zh' ? '尚未连接库。' : 'No vault connected yet.')}</p>
+        <p>{vault.vaultPath ? `${t.vaultId}: ${vault.vaultPath}` : (lang === 'zh' ? '尚未打开库。' : 'No library open yet.')}</p>
         <p>{vault.vaultPath ? `tables: —` : (lang === 'zh' ? '尚无表信息。' : 'No table info yet.')}</p>
         <p><strong>{t.version}</strong>: {vault.appVersion ?? '—'}</p>
         {vault.updateCheck && (

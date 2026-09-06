@@ -71,7 +71,7 @@ export function useVaultConnection(t: Dict): VaultConnection {
     setVaultError('');
     setStatus(t.connecting);
     try {
-      const ctx = await invoke<VaultContext>('connect_vault', { path, generation });
+      const ctx = await invoke<VaultContext>('connect_library', { path, generation });
       if (!isCurrentVaultConnection(generation)) return null;
       const nextPath = typeof ctx?.root === 'string' ? ctx.root : path;
       vaultPathRef.current = nextPath;
@@ -99,7 +99,7 @@ export function useVaultConnection(t: Dict): VaultConnection {
     const request = captureVaultRequest();
     if (!request.expectedVaultPath) return false;
     try {
-      const ctx = await invoke<VaultContext>('vault_context');
+      const ctx = await invoke<VaultContext>('library_context');
       if (!isCurrentVaultRequest(request)) return false;
       const nextPath = typeof ctx?.root === 'string' ? ctx.root : request.expectedVaultPath;
       if (!nextPath) return false;
@@ -169,7 +169,7 @@ export function useVaultConnection(t: Dict): VaultConnection {
       for (const vault of candidates) {
         const generation = beginVaultConnection();
         try {
-          const ctx = await invoke<VaultContext>('connect_vault', { path: vault.path, generation });
+          const ctx = await invoke<VaultContext>('connect_library', { path: vault.path, generation });
           if (cancelled || !isCurrentVaultConnection(generation)) return;
           const nextPath = typeof ctx?.root === 'string' ? ctx.root : vault.path;
           vaultPathRef.current = nextPath;

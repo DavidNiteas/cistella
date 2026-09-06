@@ -1,5 +1,8 @@
 ﻿[workspace]
 members = [
+  "crates/tree-space/tree-space",
+  "crates/tree-space/tree-space-derive",
+  "crates/tree-space/perfkit",
   "crates/cistella-tree-space",
   "crates/cistella-workspace",
   "crates/openalex-analysis-core",

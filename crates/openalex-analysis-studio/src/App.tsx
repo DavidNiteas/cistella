@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Shell, Sidebar, StatusBar } from './components/layout';
 import { VaultPage, ReadingPage, SearchPage, SourcePage, NotesPage, SettingsPage } from './features';
 import { useI18n, useVaultConnection, useVaultContext, useVaultImport, useLiterature, useReadingSessions, useSourceAnalysis, useLocalSearch, useNotes, useSettings, useWorkspaceContract } from './hooks';
@@ -94,8 +94,8 @@ export default function App() {
       setSelectedId: notes.setSelectedId,
       save: notes.save,
     },
-    newItemHint: lang === 'zh' ? '请先切换到阅读工作区再新建条目。' : 'Switch to the Reading workspace to create a new item.',
-    saveHint: lang === 'zh' ? '当前工作区没有可保存的编辑器。' : 'There is nothing to save in the current workspace.',
+    newItemHint: lang === 'zh' ? '请先切换到阅读页面再新建条目。' : 'Switch to Reading to create a new item.',
+    saveHint: lang === 'zh' ? '当前页面没有可保存的编辑器。' : 'There is nothing to save on the current page.',
   });
 
   return (

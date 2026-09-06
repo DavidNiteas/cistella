@@ -10,7 +10,7 @@ export function useWorkspaceContract() {
     let cancelled = false;
     const load = async () => {
       try {
-        const contract = await invoke<WorkspaceContract>('workspace_contract');
+        const contract = await invoke<WorkspaceContract>('library_contract');
         if (!cancelled) setWorkspaceContract(contract);
       } catch (error: any) {
         if (!cancelled) setWorkspaceContractError(String(error?.message ?? error));

@@ -122,7 +122,7 @@ export function CommandPalette({ open, onClose, workspace, setWorkspace, recentV
             <Icon icon={FilePlus} size={16} />
             <span className={styles.itemText}>
               <span>{t.addLiterature}</span>
-              <small>{lang === 'zh' ? '在阅读工作区中新建条目' : 'Create a new item in Reading'}</small>
+              <small>{lang === 'zh' ? '在阅读页面中新建条目' : 'Create a new item in Reading'}</small>
             </span>
             <small className={styles.itemMeta}>Ctrl/Cmd+N</small>
           </button>

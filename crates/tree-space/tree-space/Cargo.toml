@@ -1,0 +1,38 @@
+[package]
+name = "tree-space"
+version = "0.1.0"
+edition = "2024"
+authors = ["mzparse contributors"]
+description = "v3 tree-space foundation: type/node registry, manifest bootstrap, and storage runtime"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/mzparse/mzparse"
+rust-version = "1.95"
+
+[dependencies]
+# Arrow 55 IPC is the only byte encoding used for table payloads and metadata.
+arrow = { version = "55", features = ["ipc"] }
+parquet = { version = "55", features = ["arrow"] }
+memmap2 = "0.9"
+perfkit = { path = "../perfkit" }
+xxhash-rust = { version = "0.8", features = ["xxh3"] }
+
+# Compile-time field registry derive for v5 tree nodes.
+tree-space-derive = { path = "../tree-space-derive" }
+
+# M11 cross-process zero-copy shared regions (platform backends).
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Memory",
+    "Win32_System_Threading",
+] }
+
+[target.'cfg(unix)'.dependencies]
+memfd = "0.6"
+libc = "0.2"
+
+[dev-dependencies]
+proptest = "1.6"
+tempfile = "3.14"

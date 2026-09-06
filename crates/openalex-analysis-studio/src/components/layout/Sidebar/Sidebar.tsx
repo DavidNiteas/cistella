@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, PanelLeft } from 'lucide-react';
 import styles from './Sidebar.module.css';
 import { Icon } from '../../ui/Icon/Icon';
@@ -71,7 +71,7 @@ export function Sidebar({ active, onChange, labels, status, version, collapsed =
         </button>
       </div>
       {!collapsed && <em className={styles.sectionLabel}>{labels.navigationSection}</em>}
-      <nav className={styles.nav} aria-label={workspaceContract ? `${workspaceContract.schemaVersion} Workspace navigation` : 'Workspace navigation'}>
+      <nav className={styles.nav} aria-label={workspaceContract ? `${workspaceContract.schemaVersion} Library navigation` : 'Library navigation'}>
         {workspaceNavigationCategories.map((category) => {
           const categoryId = category.id as WorkspaceCategoryId;
           const open = isCategoryOpen(categoryId);

@@ -1,4 +1,4 @@
-﻿[package]
+[package]
 name = "cistella-workspace"
 version.workspace = true
 edition.workspace = true
@@ -12,6 +12,6 @@ path = "src/lib.rs"
 serde.workspace = true
 serde_json.workspace = true
 cistella-core = { path = "../openalex-analysis-core" }
-tree-space = { path = "../../../tree-space/tree-space" }
+tree-space = { path = "../tree-space/tree-space" }
 cistella-tree-space = { path = "../cistella-tree-space" }
 

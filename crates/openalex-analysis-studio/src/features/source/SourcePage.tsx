@@ -48,7 +48,7 @@ export function SourcePage({ vault, source, context, t, lang, onConnect }: Sourc
           }
         />
         {vault.hasVault ? (
-          <p>{context.summary?.source?.name ? `${context.summary.source.name} · ${context.summary.source.entity ?? 'source'} · ${context.summary.vault_id ?? 'vault'}` : t.noData}</p>
+          <p>{context.summary?.source?.name ? `${context.summary.source.name} · ${context.summary.source.entity ?? 'source'} · ${context.summary.vault_id ?? 'library'}` : t.noData}</p>
         ) : (
           <p>{t.connectForAnalysis}</p>
         )}

@@ -18,7 +18,7 @@ export function SearchPage({ vault, search, items, t, lang }: SearchPageProps) {
       <Card>
         <PageHeader
           title={t.search}
-          description={lang === 'zh' ? '检索当前库的标题、作者、标签和已建立索引的 PDF 正文。结果只返回文献和资产身份。' : 'Search titles, authors, tags, and indexed PDF text in the current Vault. Results contain identities only.'}
+          description={lang === 'zh' ? '检索当前库的标题、作者、标签和已建立索引的 PDF 正文。结果只返回文献和资产身份。' : 'Search titles, authors, tags, and indexed PDF text in the current library. Results contain identities only.'}
         />
         {!vault.hasVault && <p>{t.connectForAnalysis}</p>}
       </Card>
@@ -50,7 +50,7 @@ export function SearchPage({ vault, search, items, t, lang }: SearchPageProps) {
               title={lang === 'zh' ? '索引健康' : 'Index health'}
               action={<span className={`${styles.searchStatus} ${search.indexState?.status ? (styles as Record<string, string>)[search.indexState.status] ?? '' : ''}`}>{search.indexState?.status ?? 'missing'}</span>}
             />
-            <p>{search.indexState?.detail || (lang === 'zh' ? '索引操作需要由你明确发起；连接 Vault 不会隐式重建。' : 'Index work is explicit; connecting a Vault never rebuilds implicitly.')}</p>
+            <p>{search.indexState?.detail || (lang === 'zh' ? '索引操作需要由你明确发起；打开当前库不会隐式重建。' : 'Index work is explicit; opening a library never rebuilds implicitly.')}</p>
             <div className="actions">
               <Button onClick={() => void search.runTask('synchronize_local_search_index')} disabled={search.task?.status === 'building'} loading={search.task?.status === 'building'}>
                 {lang === 'zh' ? '同步' : 'Sync'}

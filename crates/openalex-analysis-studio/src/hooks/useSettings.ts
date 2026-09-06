@@ -106,7 +106,7 @@ export function useSettings(vault: VaultConnection, adapters: Adapter[], t: Dict
     const picked = await save({ defaultPath: defaultName, filters: [{ name: 'ZIP', extensions: ['zip'] }] });
     if (typeof picked !== 'string') return;
     try {
-      await invoke('backup_vault', { vaultPath: vault.vaultPath, backupPath: picked });
+      await invoke('backup_library', { vaultPath: vault.vaultPath, backupPath: picked });
       const message = `${t.backupComplete}: ${short(picked)}`;
       vault.setStatus(message);
       toast.push(message, 'success');
@@ -126,7 +126,7 @@ export function useSettings(vault: VaultConnection, adapters: Adapter[], t: Dict
     if (!target) return;
     const restoredDir = `${target}/${baseName(backup).replace(/\.zip$/i, '')}`;
     try {
-      await invoke('restore_vault', { backupPath: backup, targetPath: restoredDir });
+      await invoke('restore_library', { backupPath: backup, targetPath: restoredDir });
       await connect(restoredDir);
       const message = `${t.restoreComplete}: ${short(restoredDir)}`;
       vault.setStatus(message);

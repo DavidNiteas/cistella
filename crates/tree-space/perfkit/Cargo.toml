@@ -1,0 +1,10 @@
+[package]
+name = "perfkit"
+version = "0.1.0"
+edition = "2024"
+authors = ["MetaEngine contributors"]
+description = "Generic, dependency-free performance-analysis framework (structural counters + phase timers)"
+license = "MIT OR Apache-2.0"
+rust-version = "1.95"
+
+[dependencies]

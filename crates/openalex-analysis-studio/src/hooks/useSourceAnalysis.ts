@@ -110,7 +110,7 @@ export function useSourceAnalysis(vault: VaultConnection, t: Dict, lang: Lang): 
     const current = snapshot ?? currentQuery;
     try {
       const [nextOverview, nextRanking, nextResults] = await Promise.all([
-        invoke<unknown>('vault_overview'),
+        invoke<unknown>('library_overview'),
         invoke<unknown>('top_sources', {
           metric: current.metric,
           sourceType: current.sourceType,

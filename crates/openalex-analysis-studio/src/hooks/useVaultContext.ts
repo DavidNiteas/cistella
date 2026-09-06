@@ -77,7 +77,7 @@ export function useVaultContext(vault: VaultConnection, t: Dict): VaultContextVa
     const req = request ?? vault.captureVaultRequest();
     if (!req.expectedVaultPath) return false;
     try {
-      const ctx = await invoke<VaultContext>('vault_context');
+      const ctx = await invoke<VaultContext>('library_context');
       if (!vault.isCurrentVaultRequest(req)) return false;
       await applyContext(ctx, req);
       return true;

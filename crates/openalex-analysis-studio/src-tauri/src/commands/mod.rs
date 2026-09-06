@@ -146,6 +146,13 @@ pub fn workspace_contract() -> CommandResult<workspace_facade::WorkspaceContract
     Ok(workspace_facade::contract())
 }
 
+/// Product-facing name for the current cistella library contract.
+/// Keep `workspace_contract` registered for legacy/headless callers.
+#[tauri::command]
+pub fn library_contract() -> CommandResult<workspace_facade::WorkspaceContract> {
+    workspace_contract()
+}
+
 #[tauri::command]
 pub fn inspect_legacy_vault(
     root: String,
@@ -1502,6 +1509,15 @@ pub(crate) fn import_sources(
         .vault_path = Some(PathBuf::from(req.output_dir));
     serde_json::to_value(vault.context()).map_err(|e| e.to_string())
 }
+/// Import source data into the currently selected cistella library.
+/// The legacy `import_sources` command remains available for compatibility.
+#[tauri::command]
+pub(crate) fn import_to_library(
+    req: ImportSourcesRequest,
+    state: tauri::State<AppState>,
+) -> CommandResult<Value> {
+    import_sources(req, state)
+}
 
 fn stale_connection_error(generation: u64, latest_generation: u64) -> String {
     format!(
@@ -1557,12 +1573,25 @@ pub(crate) fn connect_vault(
     }
     serde_json::to_value(context).map_err(|e| e.to_string())
 }
+/// Product-facing library connection command; `connect_vault` is retained as a legacy alias.
+#[tauri::command]
+pub(crate) fn connect_library(
+    path: String,
+    generation: u64,
+    state: tauri::State<AppState>,
+) -> CommandResult<Value> {
+    connect_vault(path, generation, state)
+}
 
 #[tauri::command]
 pub(crate) fn vault_overview(state: tauri::State<AppState>) -> CommandResult<Value> {
     vault_from_state(&state)?
         .overview_json()
         .map_err(|e| e.to_string())
+}
+#[tauri::command]
+pub(crate) fn library_overview(state: tauri::State<AppState>) -> CommandResult<Value> {
+    vault_overview(state)
 }
 
 #[tauri::command]
@@ -1577,6 +1606,10 @@ pub(crate) fn vault_context(state: tauri::State<AppState>) -> CommandResult<Valu
     let vault =
         Vault::open_any(path.clone(), VaultOpenOptions::default()).map_err(|e| e.to_string())?;
     serde_json::to_value(vault.context()).map_err(|e| e.to_string())
+}
+#[tauri::command]
+pub(crate) fn library_context(state: tauri::State<AppState>) -> CommandResult<Value> {
+    vault_context(state)
 }
 
 #[tauri::command]
@@ -1626,12 +1659,20 @@ pub(crate) fn recent_vaults() -> CommandResult<Vec<RecentVaultDto>> {
     };
     Ok(vaults.into_iter().map(recent_vault_to_dto).collect())
 }
+#[tauri::command]
+pub(crate) fn recent_libraries() -> CommandResult<Vec<RecentVaultDto>> {
+    recent_vaults()
+}
 
 #[tauri::command]
 pub(crate) fn update_recent_vaults(vaults: Vec<RecentVaultDto>) -> CommandResult<()> {
     let dirs = current_app_directories()?;
     let vaults: Vec<RecentVault> = vaults.into_iter().map(recent_vault_from_dto).collect();
     dirs.save_recent_vaults(&vaults).map_err(|e| e.to_string())
+}
+#[tauri::command]
+pub(crate) fn update_recent_libraries(vaults: Vec<RecentVaultDto>) -> CommandResult<()> {
+    update_recent_vaults(vaults)
 }
 
 #[tauri::command]
@@ -1661,11 +1702,19 @@ pub(crate) fn backup_vault(vault_path: String, backup_path: String) -> CommandRe
     backup_vault_core(PathBuf::from(vault_path), PathBuf::from(backup_path))
         .map_err(|e| e.to_string())
 }
+#[tauri::command]
+pub(crate) fn backup_library(vault_path: String, backup_path: String) -> CommandResult<()> {
+    backup_vault(vault_path, backup_path)
+}
 
 #[tauri::command]
 pub(crate) fn restore_vault(backup_path: String, target_path: String) -> CommandResult<()> {
     restore_vault_core(PathBuf::from(backup_path), PathBuf::from(target_path))
         .map_err(|e| e.to_string())
+}
+#[tauri::command]
+pub(crate) fn restore_library(backup_path: String, target_path: String) -> CommandResult<()> {
+    restore_vault(backup_path, target_path)
 }
 
 #[tauri::command]

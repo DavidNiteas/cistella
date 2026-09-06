@@ -85,7 +85,7 @@ export function remember(path: string) {
 
 export async function fetchRecentVaults(): Promise<RecentVaultDto[]> {
   try {
-    return await invoke<RecentVaultDto[]>('recent_vaults');
+    return await invoke<RecentVaultDto[]>('recent_libraries');
   } catch {
     return [];
   }
@@ -93,7 +93,7 @@ export async function fetchRecentVaults(): Promise<RecentVaultDto[]> {
 
 export async function persistRecentVaults(vaults: RecentVaultDto[]) {
   try {
-    await invoke('update_recent_vaults', { vaults });
+    await invoke('update_recent_libraries', { vaults });
   } catch {
     /* keep local state even if backend persist fails */
   }

@@ -1,4 +1,4 @@
-﻿[package]
+[package]
 name = "cistella-tree-space"
 version.workspace = true
 edition.workspace = true
@@ -13,4 +13,4 @@ arrow.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
-tree-space = { path = "../../../tree-space/tree-space" }
+tree-space = { path = "../tree-space/tree-space" }

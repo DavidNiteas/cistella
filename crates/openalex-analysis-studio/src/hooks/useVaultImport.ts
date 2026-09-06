@@ -50,7 +50,7 @@ export function useVaultImport(vault: VaultConnection, context: VaultContextValu
     setLastImport(request);
     setImportError('');
     try {
-      const ctx = await invoke<VaultContext>('import_sources', { req: request });
+      const ctx = await invoke<VaultContext>('import_to_library', { req: request });
       const outputDir = typeof ctx?.root === 'string' ? ctx.root : request.outputDir;
       vault.setVaultPath(outputDir);
       context.applyContext(ctx);

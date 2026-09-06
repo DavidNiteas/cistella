@@ -50,7 +50,7 @@ export const workspaceNavigationCategories: WorkspaceNavigationCategory[] = [
     label: { zh: '管理', en: 'Management' },
     description: { zh: '管理库、资产和数据流转', en: 'Manage libraries, assets, and data flows' },
     entries: [
-      { id: 'vault-workspace', workspace: 'vault', icon: Database, label: { zh: '文献库', en: 'Library' }, description: { zh: '连接、导入和管理本地文献库', en: 'Connect, import, and manage the local literature library' }, kind: 'workspace', shortcut: 'Ctrl/Cmd+1' },
+      { id: 'vault-workspace', workspace: 'vault', icon: Database, label: { zh: '库管理', en: 'Library' }, description: { zh: '打开、导入和管理当前 cistella 库', en: 'Open, import, and manage the current cistella library' }, kind: 'workspace', shortcut: 'Ctrl/Cmd+1' },
     ],
   },
   {
